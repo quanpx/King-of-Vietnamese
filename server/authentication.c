@@ -1,5 +1,6 @@
 #include "authentication.h"
 #include <pthread.h>
+#include "../utils/utils.h"
 extern User *users;
 extern Room *room;
 extern Player *players;
@@ -21,11 +22,12 @@ int authenticate(User *users, char *username, char *password)
 }
 User *handleLogin(char *client_message, int socket)
 {
+	Message *mess = split_message(client_message);
 	char username[20];
 	char password[20];
 	bzero(username, 20);
 	bzero(password, 20);
-	char *token = strtok(client_message, "|");
+	char *token = strtok(mess->body, "-");
 	strcpy(username, token);
 	// Tìm kiếm user
 	User *user = searchUser(users, username);
@@ -37,52 +39,35 @@ User *handleLogin(char *client_message, int socket)
 	else
 
 	{
-		if (user->status == 0)
-		{
-			//lckd: locked Tài khoản đang tạm khóa 
-			strcpy(client_message, "lckd");
-		}
-		else
-		{
 			// Kiểm tra nếu nhập quá số lần sẽ bị khóa tài khỏa
 			token = strtok(NULL, "|");
 			strcpy(password, token);
-			if ((token = strtok(NULL, "|")) != NULL)
+			// Tiến hành kiểm tra thông tin tài khoản mật khẩu
+
+			// xác thực thông tin user có hợp lệ
+			int check = authenticate(users, username, password);
+			if (check)
 			{
 
-				user->status = 0;
-				strcpy(client_message, "lock");
-				writeUsersToFile(users, "../file/test.txt");
+				strcpy(client_message, "succ");
+				user->socket = socket;
+				// Nếu thông tin hợp lệ, tạo ra 1 player với tên giống user ;
+				Player *player = initPlayer(username, socket);
+				addPlayer(&players, player);
+				pthread_mutex_lock(&mutex);
+				addPlayerToRoom(room, player);
+				pthread_cond_signal(&cond);
+				pthread_mutex_unlock(&mutex);
+				printRoom(room);
+				// Tăng số người chơi lên 1
 			}
-			// Tiến hành kiểm tra thông tin tài khoản mật khẩu
+			// còn không thông báo đăng nhập thất bại
 			else
 			{
-
-				// xác thực thông tin user có hợp lệ
-				int check = authenticate(users, username, password);
-				if (check)
-				{
-
-					strcpy(client_message, "succ");
-					user->socket = socket;
-					// Nếu thông tin hợp lệ, tạo ra 1 player với tên giống user ;
-					Player *player = initPlayer(username,socket);
-					addPlayer(&players,player);
-					pthread_mutex_lock(&mutex);
-					addPlayerToRoom(room, player);
-					pthread_cond_signal(&cond);
-					pthread_mutex_unlock(&mutex);
-					printRoom(room);
-					// Tăng số người chơi lên 1
-				}
-				// còn không thông báo đăng nhập thất bại
-				else
-				{
-					user=NULL;
-					strcpy(client_message, "fail");
-				}
+				user = NULL;
+				strcpy(client_message, "fail");
 			}
-		}
+		
 	}
 	return user;
 }

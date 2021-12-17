@@ -4,32 +4,36 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
-extern User* users;
-extern Room* room;
+#include "../utils/utils.h"
+extern User *users;
+extern Room *room;
 // Xử lý chơi game
-pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond=PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 void *connection_handler(void *client_socket)
 {
 	int socket = *(int *)client_socket;
-	char client_message[100];
-	while (recv(socket, client_message, 100, 0) > 0)
+	char auth[256];
+	char message[256];
+	bzero(auth,256);
+	bzero(message,256);
+	while (recv(socket, auth, 100, 0) >= 0)
 	{
 		// Xử lý thông tin đăng nhập, sau khi đăng nhập thành công trả về thông tin của user
-		User *user = handleLogin(client_message, socket);
-		if(user!=NULL)
+		User *user = handleLogin(auth, socket);
+		if (user != NULL)
 		{
 			printf("%s at socket %d joined! \n", user->username, user->socket);
 		}
-		
-		send(socket, client_message, strlen(client_message), 0);
-		if (strcmp(client_message, "succ") == 0)
+		modify_message(1,auth,message);
+		send(socket, message, strlen(message), 0);
+		if (strcmp(auth, "succ") == 0)
 		{
+			bzero(auth,256);
 			// Sau khi đăng nhập thành công , client tham gia vào phòng
 			clientJoined(user);
-			
 		}
-		bzero(client_message, 100);
+		bzero(message, 256);
 	}
 
 	return 0;
@@ -40,7 +44,7 @@ int main(int argc, char **argv)
 {
 
 	//Đọc user từ file
-	room=initRoom();
+	room = initRoom();
 	readUsersFromFile(&users, "../file/user.txt");
 
 	int server_socket;
@@ -103,10 +107,24 @@ int main(int argc, char **argv)
 			printf("Join thread error!\n");
 		}
 	}
+	if (pthread_create(&threads[no], NULL, &connection_handler, NULL) < 0)
+	{
+		perror("Could not create thread");
+		return 1;
+	}
+	else
+		printf("Server acccept the client...\n");
+	puts("Handler assigned");
+	for (int i = 0; i < 3; i++)
+	{
+	if (pthread_join(threads[i], NULL) != 0)
+	{
+		printf("Join thread error!\n");
+	}
+}
+// int send_status;
+// send_status=send(client_socket, server_message, sizeof(server_message), 0);
+close(server_socket);
 
-	// int send_status;
-	// send_status=send(client_socket, server_message, sizeof(server_message), 0);
-	close(server_socket);
-
-	return 0;
+return 0;
 }

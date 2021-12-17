@@ -1,5 +1,6 @@
 #include "question.h"
 #include<pthread.h>
+#include "../utils/utils.h"
 extern pthread_mutex_t mutex;
 extern Room *room;
 int no_question = 0;
@@ -118,11 +119,14 @@ là user va câu hỏi
 */
 void sendQuestion(Question *quest)
 {
+	 char message[256];
+	 bzero(message,256);
 	for (int i = 0; i < room->no_player; i++)
 	{
 		if (room->players[i] != NULL)
 		{
-			send(room->players[i]->socket, quest->quest, strlen(quest->quest), 0);
+			modify_message(1,quest->quest,message);
+			send(room->players[i]->socket, message, strlen(message), 0);
 		}
 	}
 }
@@ -131,14 +135,15 @@ Nhận câu trả lời từ client và kiểm tra kết quả
 */
 void receiveAnswer(Player *player, Question *quest)
 {
-	char answer[50];
-	bzero(answer, 50);
-	if(recv(player->socket, answer, sizeof(answer), 0) > 0)
+	char message[256];
+	bzero(message, 256);
+	if(recv(player->socket, message, sizeof(message), 0) >= 0)
 	{
 		/*
 		Nếu checkAnswer nếu đúng trả về 1 thì cập nhật số điểm của players
 		*/
-		int check = checkAnswer(quest, answer);
+		Message *mess=split_message(message);
+		int check = checkAnswer(quest, mess->body);
 		if (check)
 		{
 			updatePoint(player, no_question, quest->point);
@@ -150,7 +155,7 @@ void receiveAnswer(Player *player, Question *quest)
 			printPlayers(player);
 			printf("False at number %d\n",no_question);
 		}
-		bzero(answer,50);
+		bzero(message,50);
 	}
 }
 void getQuestions(Question *questions[MAX_QUESTION],char *file)
