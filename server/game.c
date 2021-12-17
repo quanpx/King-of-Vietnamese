@@ -1,21 +1,28 @@
 #include "game.h"
+#include "pthread.h"
+extern pthread_mutex_t mutex;
 extern int no_question;
 extern Player *players;
+extern Room *room;
+extern pthread_cond_t cond;
+extern Question *questions[MAX_QUESTION];
 void playGame(Player *player)
 {
-    Question *questions[MAX_QUESTION];
-    getQuestions(questions,"../file/question.txt");
-    int no = 0;
-    Question *quest = questions[no];
-   
-    while (no <= 3)
+   pthread_exit(NULL);
+    Question *quest = NULL;
+
+    while (no_question < 4)
     {
-        // gửi câu hỏi tới client
+        
+        quest=questions[no_question];
+        pthread_mutex_lock(&mutex);
+        no_question++;
+        pthread_mutex_unlock(&mutex);
+         // gửi câu hỏi tới client
         sendQuestion(quest);
         // Nhận câu hỏi từ client
         receiveAnswer(player, quest);
-        quest = questions[++no];
-        no_question++;
+
     }
     send(player->socket, "done", strlen("done"), 0);
     return;
@@ -39,6 +46,14 @@ void clientJoined(User *user)
             }
             else
             { // play game
+                pthread_mutex_lock(&mutex);
+                while(room->no_player<2)
+                {
+                   printf("Waiting player...!");
+                   pthread_cond_wait(&cond,&mutex);
+                }
+                pthread_mutex_unlock(&mutex);
+                getQuestions(questions,"../file/question.txt");
                 playGame(player);
             }
         }

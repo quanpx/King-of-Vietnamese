@@ -1,6 +1,9 @@
 #include "question.h"
+#include<pthread.h>
+extern pthread_mutex_t mutex;
 extern Room *room;
-int no_question = 1;
+int no_question = 0;
+Question *questions[MAX_QUESTION];
 Question *initQuest(char *quest, char *answer, int point)
 {
 	Question *newQuest = (Question *)malloc(sizeof(Question));
@@ -130,7 +133,7 @@ void receiveAnswer(Player *player, Question *quest)
 {
 	char answer[50];
 	bzero(answer, 50);
-	if (recv(player->socket, answer, sizeof(answer), 0) > 0)
+	if(recv(player->socket, answer, sizeof(answer), 0) > 0)
 	{
 		/*
 		Nếu checkAnswer nếu đúng trả về 1 thì cập nhật số điểm của players
@@ -140,12 +143,14 @@ void receiveAnswer(Player *player, Question *quest)
 		{
 			updatePoint(player, no_question, quest->point);
 			printPlayers(player);
-			printf("True\n");
+			printf("True at number %d\n",no_question);
 		}
 		else
 		{
-			printf("False\n");
+			printPlayers(player);
+			printf("False at number %d\n",no_question);
 		}
+		bzero(answer,50);
 	}
 }
 void getQuestions(Question *questions[MAX_QUESTION],char *file)

@@ -8,6 +8,7 @@ extern User* users;
 extern Room* room;
 // Xử lý chơi game
 pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond=PTHREAD_COND_INITIALIZER;
 void *connection_handler(void *client_socket)
 {
 	int socket = *(int *)client_socket;

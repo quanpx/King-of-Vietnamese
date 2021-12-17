@@ -1,7 +1,10 @@
 #include "authentication.h"
+#include <pthread.h>
 extern User *users;
 extern Room *room;
 extern Player *players;
+extern pthread_mutex_t mutex;
+extern pthread_cond_t cond;
 int authenticate(User *users, char *username, char *password)
 {
 	User *user = searchUser(users, username);
@@ -65,7 +68,10 @@ User *handleLogin(char *client_message, int socket)
 					// Nếu thông tin hợp lệ, tạo ra 1 player với tên giống user ;
 					Player *player = initPlayer(username,socket);
 					addPlayer(&players,player);
+					pthread_mutex_lock(&mutex);
 					addPlayerToRoom(room, player);
+					pthread_cond_signal(&cond);
+					pthread_mutex_unlock(&mutex);
 					printRoom(room);
 					// Tăng số người chơi lên 1
 				}
