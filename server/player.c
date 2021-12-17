@@ -1,5 +1,5 @@
 #include "player.h"
-
+Player *players=NULL;
 Player *initPlayer(char *username,int socket)
 {
     Player *player=(Player*)malloc(sizeof(Player));

@@ -4,6 +4,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifndef STRUCT_USER
+#define STRUCT_USER
 typedef struct user
 {
 	char username[10];
@@ -12,7 +14,7 @@ typedef struct user
 	int socket;
 	struct user *next;
 } User;
-
+#endif /*STRUCT_USER */
 
 User *initUser(char *username, char *password, int status);
 void addUser(User **users,User *user);
