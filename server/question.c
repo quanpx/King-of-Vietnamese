@@ -5,6 +5,8 @@ extern pthread_mutex_t mutex;
 extern Room *room;
 int no_question = 0;
 Question *questions[MAX_QUESTION];
+
+
 Question *initQuest(char *quest, char *answer, int point)
 {
 	Question *newQuest = (Question *)malloc(sizeof(Question));

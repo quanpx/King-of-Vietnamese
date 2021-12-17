@@ -21,10 +21,6 @@ void *connection_handler(void *client_socket)
 	{
 		// Xử lý thông tin đăng nhập, sau khi đăng nhập thành công trả về thông tin của user
 		User *user = handleLogin(auth, socket);
-		if (user != NULL)
-		{
-			printf("%s at socket %d joined! \n", user->username, user->socket);
-		}
 		modify_message(1,auth,message);
 		send(socket, message, strlen(message), 0);
 		if (strcmp(auth, "succ") == 0)

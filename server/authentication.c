@@ -51,6 +51,7 @@ User *handleLogin(char *client_message, int socket)
 
 				strcpy(client_message, "succ");
 				user->socket = socket;
+				printf("%s at socket %d joined! \n", user->username, user->socket);
 				// Nếu thông tin hợp lệ, tạo ra 1 player với tên giống user ;
 				Player *player = initPlayer(username, socket);
 				addPlayer(&players, player);

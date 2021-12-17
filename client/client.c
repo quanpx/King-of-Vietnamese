@@ -71,11 +71,6 @@ int main(int argc, const char **argv)
                 if (strcmp(mess->body, "succ") == 0)
                 {
                     printf("Login successful!\n");
-                    if (recv(network_socket, message, sizeof(message), 0) >= 0)
-                    {
-                        mess = split_message(message);
-                        printf("%s\n", mess->body);
-                    }
                     joinedToServer(network_socket);
                     return 1;
                 }
@@ -124,7 +119,10 @@ void joinedToServer(int server_socket)
             printf("You finished your game!Bye\n");
             return;
         }
-        else
+        else if(strcmp(messg->body,"wait")==0)
+        {
+            printf("Waiting other player...\n");
+        }else
         {
             printf("Question:%s\n", messg->body);
             answerQuestion(server_socket);
