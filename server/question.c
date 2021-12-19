@@ -2,6 +2,7 @@
 #include<pthread.h>
 #include "../utils/utils.h"
 extern pthread_mutex_t mutex;
+extern pthread_cond_t cond;
 extern Room *room;
 int no_question = 0;
 Question *questions[MAX_QUESTION];
@@ -158,6 +159,7 @@ void receiveAnswer(Player *player, Question *quest)
 			printf("False at number %d\n",no_question);
 		}
 		bzero(message,50);
+		no_question++;
 	}
 }
 void getQuestions(Question *questions[MAX_QUESTION],char *file)

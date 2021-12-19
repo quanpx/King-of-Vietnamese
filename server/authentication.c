@@ -59,7 +59,6 @@ User *handleLogin(char *client_message, int socket)
 				addPlayerToRoom(room, player);
 				pthread_cond_signal(&cond);
 				pthread_mutex_unlock(&mutex);
-				printRoom(room);
 				// Tăng số người chơi lên 1
 			}
 			// còn không thông báo đăng nhập thất bại

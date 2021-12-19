@@ -1,5 +1,5 @@
 #include "user.h"
 #include "question.h"
 #include <pthread.h>
-void playGame(Player *player);
+void playGame();
 void clientJoined(User *user);

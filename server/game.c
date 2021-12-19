@@ -13,17 +13,14 @@ void playGame(Player *player)
 
     
     int no = 0;
-    while (no < 4)
+    while (no < 10)
     {
-        no=no_question;
         
-        pthread_mutex_lock(&mutex);
         quest = questions[no];
-        no_question++;
-
-        pthread_mutex_unlock(&mutex);
         // gửi câu hỏi tới client
         sendQuestion(quest);
+      
+        no=no_question;
         // Nhận câu hỏi từ client
         receiveAnswer(player, quest);
     }
@@ -62,6 +59,7 @@ void clientJoined(User *user)
                 if (questions[0] == NULL)
                 {
                     getQuestions(questions, "../file/question.txt");
+                    printQuests(questions);
                 }
 
                 playGame(player);

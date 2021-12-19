@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <pthread.h>
 #include "../utils/utils.h"
+#include <fcntl.h>
 extern User *users;
 extern Room *room;
 // Xử lý chơi game
@@ -15,17 +16,17 @@ void *connection_handler(void *client_socket)
 	int socket = *(int *)client_socket;
 	char auth[256];
 	char message[256];
-	bzero(auth,256);
-	bzero(message,256);
+	bzero(auth, 256);
+	bzero(message, 256);
 	while (recv(socket, auth, 100, 0) >= 0)
 	{
 		// Xử lý thông tin đăng nhập, sau khi đăng nhập thành công trả về thông tin của user
 		User *user = handleLogin(auth, socket);
-		modify_message(1,auth,message);
+		modify_message(1, auth, message);
 		send(socket, message, strlen(message), 0);
 		if (strcmp(auth, "succ") == 0)
 		{
-			bzero(auth,256);
+			bzero(auth, 256);
 			// Sau khi đăng nhập thành công , client tham gia vào phòng
 			clientJoined(user);
 		}
@@ -45,7 +46,6 @@ int main(int argc, char **argv)
 
 	int server_socket;
 	server_socket = socket(AF_INET, SOCK_STREAM, 0);
-
 	if (server_socket == -1)
 	{
 		perror("Socket initialisation failed");
@@ -76,13 +76,14 @@ int main(int argc, char **argv)
 	else
 		printf("Server listening..\n");
 	int no = 0;
-	pthread_t threads[2];
+	pthread_t threads;
 	printf("Listening...\n");
+
 	while (no < 3)
 	{
 		int client_socket = accept(server_socket, NULL, NULL);
 		printf("Connection accepted\n");
-		if (pthread_create(&threads[no], NULL, &connection_handler, &client_socket) < 0)
+		if (pthread_create(&threads, NULL, connection_handler, &client_socket) < 0)
 		{
 			perror("Could not create thread");
 			return 1;
@@ -95,32 +96,16 @@ int main(int argc, char **argv)
 		else
 			printf("Server acccept the client...\n");
 		puts("Handler assigned");
+		no++;
 	}
-	for (int i = 0; i < 3; i++)
-	{
-		if (pthread_join(threads[i], NULL) != 0)
-		{
-			printf("Join thread error!\n");
-		}
-	}
-	if (pthread_create(&threads[no], NULL, &connection_handler, NULL) < 0)
-	{
-		perror("Could not create thread");
-		return 1;
-	}
-	else
-		printf("Server acccept the client...\n");
-	puts("Handler assigned");
-	for (int i = 0; i < 3; i++)
-	{
-	if (pthread_join(threads[i], NULL) != 0)
+
+	if (pthread_join(threads, NULL) != 0)
 	{
 		printf("Join thread error!\n");
 	}
-}
-// int send_status;
-// send_status=send(client_socket, server_message, sizeof(server_message), 0);
-close(server_socket);
+	// int send_status;
+	// send_status=send(client_socket, server_message, sizeof(server_message), 0);
+	close(server_socket);
 
-return 0;
+	return 0;
 }

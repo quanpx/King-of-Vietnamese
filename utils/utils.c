@@ -23,4 +23,6 @@ void modify_message(int cmd, char *body, char *message)
     strcat(message, length);
     strcat(message, "|");
     strcat(message, body);
+
+    // cmd|length|body
 }
