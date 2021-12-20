@@ -19,7 +19,30 @@ Question *initQuest(char *quest, char *answer, int point)
 	strcpy(newQuest->quest, quest);
 	strcpy(newQuest->answer, answer);
 	newQuest->point = point;
+	newQuest->isAnswered=0;
+	newQuest->mutex=(pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+	if(newQuest->mutex==NULL)
+	{
+		printf("Allocate failed!\n");
+		exit(0);
+	}
+	pthread_mutex_init(newQuest->mutex,NULL);
+	newQuest->notAnswer=(pthread_cond_t*)malloc(sizeof(pthread_cond_t));
+	if(newQuest->notAnswer==NULL)
+	{
+		printf("Allocate failed!\n");
+		exit(0);
+	}
+	pthread_cond_init(newQuest->notAnswer,NULL);
 	return newQuest;
+}
+void destroyQuestions(Question *question)
+{
+	pthread_mutex_destroy(question->mutex);
+    pthread_cond_destroy(question->notAnswer);
+    free(question->mutex);
+	free(question->notAnswer);
+    free(question);
 }
 void addQuest(Question *quests[MAX_QUESTION], Question *quest)
 {
@@ -140,12 +163,13 @@ void receiveAnswer(Player *player, Question *quest)
 {
 	char message[256];
 	bzero(message, 256);
-	if(recv(player->socket, message, sizeof(message), 0) >= 0)
+	while(read(player->socket, message, sizeof(message)) >= 0)
 	{
 		/*
 		Nếu checkAnswer nếu đúng trả về 1 thì cập nhật số điểm của players
 		*/
 		Message *mess=split_message(message);
+		printf("%s\n",mess->body);
 		int check = checkAnswer(quest, mess->body);
 		if (check)
 		{
@@ -158,8 +182,8 @@ void receiveAnswer(Player *player, Question *quest)
 			printPlayers(player);
 			printf("False at number %d\n",no_question);
 		}
-		bzero(message,50);
-		no_question++;
+		bzero(message,256);
+		break;
 	}
 }
 void getQuestions(Question *questions[MAX_QUESTION],char *file)

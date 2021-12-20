@@ -3,7 +3,7 @@
 #include <stdlib.h>
 typedef struct message
 {
-    int cmd;
+    int cmdType;
     int length;
     char body[256];
 }Message;

@@ -1,5 +1,4 @@
 #include "room.h"
-Room *room = NULL;
 int room_id = 1;
 Room *initRoom()
 {

@@ -2,4 +2,4 @@
 #include "question.h"
 #include <pthread.h>
 void playGame();
-void clientJoined(User *user);
+void clientJoined(Player *player);

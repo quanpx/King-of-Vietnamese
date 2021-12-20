@@ -17,6 +17,9 @@ typedef struct question
     char quest[50];
     char answer[50];
     int point;
+    int isAnswered;
+    pthread_mutex_t *mutex;
+    pthread_cond_t *notAnswer;
 }Question;
 #endif /*STRUCT_QUESTION*/
 

@@ -4,7 +4,7 @@ Message* split_message(char *mess)
     Message *message=(Message*)malloc(sizeof(Message));
 
    char *token=strtok(mess,"|");
-   message->cmd=atoi(token);
+   message->cmdType=atoi(token);
    token=strtok(NULL,"|");
    message->length=atoi(token);
    token=strtok(NULL,"|");

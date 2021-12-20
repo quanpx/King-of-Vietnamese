@@ -2,4 +2,4 @@
 #include "room.h"
 #include "player.h"
 int authenticate(User *users, char *username, char *password);
-User *handleLogin(char *client_message, int socket);
+void handleLogin(char *client_message, int socket,char *result);

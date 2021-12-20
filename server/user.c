@@ -1,6 +1,4 @@
 #include "user.h"
-
-User *users;
 User *initUser(char *username, char *password, int status)
 {
 	User *newUser = (User *)malloc(sizeof(User));

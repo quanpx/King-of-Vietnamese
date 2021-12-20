@@ -10,65 +10,64 @@ extern Question *questions[MAX_QUESTION];
 Question *quest = NULL;
 void playGame(Player *player)
 {
+    char message[256];
+    bzero(message,256);
 
-    
-    int no = 0;
-    while (no < 10)
+    int no=no_question; //0 
+    while (no < 4)
     {
-        
-        quest = questions[no];
+
+        pthread_mutex_lock(&mutex);
+        quest = questions[ no_question++];
         // gửi câu hỏi tới client
+        printQuestion(quest);
+       
+        pthread_mutex_unlock(&mutex);
         sendQuestion(quest);
-      
-        no=no_question;
         // Nhận câu hỏi từ client
         receiveAnswer(player, quest);
+         no++;
+
     }
 
-    send(player->socket, "done", strlen("done"), 0);
+    modify_message(1,"done",message);
+    write(player->socket, message, strlen(message));
     return;
 }
-void clientJoined(User *user)
+void clientJoined(Player *player)
 {
 
     Message *mess;
     char message[256];
     bzero(message, 256);
-    while (recv(user->socket, message, sizeof(message), 0) > 0)
+    while (read(player->socket, message, sizeof(message)) > 0)
     {
         mess = split_message(message);
         // Khi nhận được yêu câu băt đầu từ client , bắt đấù chơi game
         if (strcmp(mess->body, "start") == 0)
         {
-            Player *player = searchPlayer(players, user->username);
-            if (player == NULL)
+            // Player *player = searchPlayer(players, user->username);
+            // if (player == NULL)
+            // {
+            //     printf("Player not found\n");
+            // }
+            // else
+             // play game
+            pthread_mutex_lock(&mutex);
+            while (room->no_player < 2)
             {
-                printf("Player not found\n");
+            bzero(message, 256);
+            modify_message(1, "wait", message);
+            send(player->socket, message, strlen(message), 0);
+            pthread_cond_wait(&cond, &mutex);
             }
-            else
-            { // play game
-                pthread_mutex_lock(&mutex);
-                while (room->no_player < 2)
-                {
-                    bzero(message, 256);
-                    modify_message(1, "wait", message);
-                    send(player->socket, message, strlen(message), 0);
-                    pthread_cond_wait(&cond, &mutex);
-                }
-                pthread_mutex_unlock(&mutex);
-                if (questions[0] == NULL)
-                {
-                    getQuestions(questions, "../file/question.txt");
-                    printQuests(questions);
-                }
+            pthread_mutex_unlock(&mutex);
+            if (questions[0] == NULL)
+            {
+                getQuestions(questions, "../file/question.txt");
+            }
 
-                playGame(player);
-            }
+            playGame(player);
         }
-        else
-        {
-            close(user->socket);
-            break;
-        }
-    }
+}
 }
