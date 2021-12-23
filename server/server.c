@@ -214,7 +214,7 @@ void *gameHandler(void *data)
 		Question *quest = game->questions[num_question];
 		pthread_mutex_unlock(game->mutex);
 		fprintf(stderr, "Broadcasting message: %s\n", quest->quest);
-		modify_message(QUESTION, quest->quest, message);
+		modify_message(QUEST, quest->quest, message);
 		for (int i = 0; i < server->numClients; i++)
 		{
 			int socket = clientSockets[i];
@@ -256,22 +256,22 @@ void *clientHandler(void *data)
 			modify_message(LOGIN, result, message);
 			write(clientSockfd, message, strlen(message));
 			break;
-		case LOGOUT:
+		case LOGOT:
 			fprintf(stderr, "Client on socket %d has disconnected.\n", clientSockfd);
 			removeClient(server, clientSockfd);
 			break;
-		case START:
+		case STATG:
 			if (server->numClients < 2)
 			{
 				printf("Wait for someone!\n");
 				bzero(message, MESS_BUFFER);
-				modify_message(MESSAGE, "wait", message);
+				modify_message(MESSG, "wait", message);
 				write(clientSockfd, message, strlen(message));
 			}
 			else
 			{
 				bzero(message, MESS_BUFFER);
-				modify_message(MESSAGE, "start", message);
+				modify_message(MESSG, "start", message);
 				for (int i = 0; i < server->numClients; i++)
 				{
 					int socket = server->clientSockets[i];
@@ -283,7 +283,7 @@ void *clientHandler(void *data)
 			}
 
 			break;
-		case ANSWER:
+		case ANSWR:
 			question = game->questions[num_question];
 			printQuestion(question);
 			printf("%s\n",mess->body);
@@ -293,9 +293,9 @@ void *clientHandler(void *data)
 				sprintf(socketStr, "%d", clientSockfd);
 				strcat(result, "Client ");
 				strcat(result, socketStr);
-				strcat(result, " ansered correctly!");
+				strcat(result, " answered correctly!");
 				bzero(message,MESS_BUFFER);
-				modify_message(ANSWER, result, message);
+				modify_message(ANSWR, result, message);
 				for (int i = 0; i < server->numClients; i++)
 				{
 					int socket = server->clientSockets[i];
@@ -306,7 +306,7 @@ void *clientHandler(void *data)
 				}
 				bzero(message, MESS_BUFFER);
 				bzero(result, 256);
-				modify_message(ANSWER, "Correct!", message);
+				modify_message(ANSWR, "Correct!", message);
 				write(clientSockfd, message, strlen(message));
 				
 				pthread_mutex_lock(game->mutex);
@@ -318,7 +318,7 @@ void *clientHandler(void *data)
 			else
 			{
 				bzero(message, MESS_BUFFER);
-				modify_message(ANSWER, "Inorrect!", message);
+				modify_message(ANSWR, "Inorrect!", message);
 				write(clientSockfd, message, strlen(message));
 			}
 

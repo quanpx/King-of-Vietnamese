@@ -14,17 +14,25 @@
 #include <fcntl.h>
 #include <sys/select.h>
 #include <errno.h>
+#include <sys/ioctl.h>
 #define STDIN_FILENO 0
 #define MESS_BUFFER 256
 static int network_socket;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 void setNonBlock(int fd);
+void setBlock(int fd);
 void joinedToServer(int sock);
 void handle_signout();
 void *receive(void *args);
 void answerQuestion(char *quest, int socket);
 void interruptHandler(int sig_unused);
 void login(int sockff);
+void playGround(int sock);
+void showMenu();
+void createRoom();
+void joinRoom();
+void startGame(int sock);
+
 int main(int argc, const char **argv)
 {
 
@@ -78,6 +86,14 @@ void login(int sockfd)
     modify_message(LOGIN, username_password, message);
     send(sockfd, message, strlen(message), 0);
 }
+void setBlock(int fd)
+{
+    int flags = fcntl(fd, F_GETFL);
+    if (flags < 0)
+        perror("fcntl failed");
+    flags &= ~O_NONBLOCK;
+    fcntl(fd, F_SETFL, flags);
+}
 void setNonBlock(int fd)
 {
     int flags = fcntl(fd, F_GETFL);
@@ -110,9 +126,11 @@ void joinedToServer(int server_socket)
                 {
                     if (fd == server_socket) // receive data from server
                     {
+
                         while (read(server_socket, message, sizeof(message)) > 0)
                         {
 
+                           
                             messg = split_message(message);
                             switch (messg->cmdType)
                             {
@@ -121,20 +139,19 @@ void joinedToServer(int server_socket)
                                 {
                                     printf("Log in success!\n");
                                     bzero(message, 256);
-                                    modify_message(START, "start", message);
-                                    send(server_socket, message, strlen(message), 0);
+                                    playGround(server_socket);
                                 }
                                 else
                                 {
                                     printf("Log in failed!\n");
                                 }
                                 break;
-                            case QUESTION:
+                            case QUEST:
                                 printf("Question :%s\n", messg->body);
                                 printf("Your answers:\n");
 
                                 break;
-                            case MESSAGE:
+                            case MESSG:
 
                                 if (strcmp(messg->body, "wait") == 0)
                                 {
@@ -152,9 +169,12 @@ void joinedToServer(int server_socket)
                                         sleep(1);
                                     }
                                     printf("Start!\n");
+                                }else
+                                {
+                                    printf("%s\n",message);
                                 }
                                 break;
-                            case ANSWER:
+                            case ANSWR:
                                 printf("%s\n", messg->body);
                                 break;
                             default:
@@ -165,17 +185,16 @@ void joinedToServer(int server_socket)
                     }
                     else if (fd == 0) // read from keyboard (stdin) and send to server
                     {
-
+                    
                         fgets(answer, 50, stdin);
                         answer[strlen(answer) - 1] = '\0';
                         if (strcmp(answer, "exit") == 0)
                         {
-                            printf("Sign out!\n");
                             interruptHandler(-1); // Reuse the interruptHandler function to disconnect the client
                         }
 
                         bzero(message, MESS_BUFFER);
-                        modify_message(ANSWER, answer, message);
+                        modify_message(ANSWR, answer, message);
                         send(server_socket, message, strlen(message), 0);
                     }
                 }
@@ -189,10 +208,72 @@ void interruptHandler(int sig_unused)
 {
     char message[MESS_BUFFER];
     bzero(message, MESS_BUFFER);
-    modify_message(LOGOUT, "exit", message);
+    modify_message(LOGOT, "exit", message);
     if (write(network_socket, message, strlen(message)) == -1)
         perror("write failed: ");
     printf("Signed out!\n");
     close(network_socket);
     exit(1);
+}
+void playGround(int sock)
+{
+
+    int select = -1;
+    while (select != 0)
+    {
+
+        showMenu();
+        setBlock(0);
+        scanf("%d", &select);
+        while (getchar()!='\n')
+        {
+            /* code */
+        }
+        
+        setNonBlock(0);
+        switch (select)
+        {
+        case 1:
+            createRoom();
+            break;
+        case 2:
+            joinRoom();
+            break;
+        case 3:
+            startGame(sock);
+            select=0;
+            break;
+        case 0:
+            select = 0;
+            break;
+        default:
+            select = 0;
+            break;
+        }
+    }
+}
+void startGame(int server_socket)
+{
+    char message[MESS_BUFFER];
+    bzero(message, MESS_BUFFER);
+    modify_message(STATG, "start", message);
+    send(server_socket, message, strlen(message), 0);
+}
+void showMenu()
+{
+    printf("===================Welcome to King of Vietnamese================\n");
+    printf("Please select one!\n");
+    printf("1. Create a room\n");
+    printf("2. Join a room\n");
+    printf("3. Start game\n");
+    printf("0. Exit\n");
+    printf("==========================Thank you!============================\n");
+}
+void createRoom()
+{
+    printf("Created room!\n");
+}
+void joinRoom()
+{
+    printf("Joined!\n");
 }
