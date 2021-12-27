@@ -1,12 +1,8 @@
 #include "authentication.h"
 #include <pthread.h>
 #include "../utils/utils.h"
-extern User *users;
-extern Room *room;
-extern Player *players;
-extern pthread_mutex_t mutex;
-extern pthread_cond_t cond;
-int authenticate(User *users, char *username, char *password)
+extern User *users[MAX_USER];
+int authenticate(char *username, char *password)
 {
 	User *user = searchUser(users, username);
 
@@ -21,9 +17,8 @@ int authenticate(User *users, char *username, char *password)
 	}
 	return 0;
 }
-void handleLogin(char *body, int socket,char *result)
+User* handleLogin(char *body, int socket,char *result)
 {
-	printf("%s\n",body);
 	char username[20];
 	char password[20];
 	bzero(result,256);
@@ -31,7 +26,7 @@ void handleLogin(char *body, int socket,char *result)
 	bzero(password, 20);
 	char *token = strtok(body, "-");
 	strcpy(username, token);
-	Player *player = NULL;
+	
 	// Tìm kiếm user
 	User *user = searchUser(users, username);
 	if (user == NULL)
@@ -47,7 +42,7 @@ void handleLogin(char *body, int socket,char *result)
 		char *token=strtok(NULL,"-");
 		strcpy(password,token);
 		// xác thực thông tin user có hợp lệ
-		int check = authenticate(users, username, password);
+		int check = authenticate(username, password);
 		if (check)
 		{
 
@@ -55,9 +50,9 @@ void handleLogin(char *body, int socket,char *result)
 			user->socket = socket;
 			printf("%s at socket %d joined! \n", user->username, user->socket);
 			// Nếu thông tin hợp lệ, tạo ra 1 player với tên giống user ;
-			player = initPlayer(username, socket);
-			addPlayer(&players, player);
-			addPlayerToRoom(room, player);
+			// player = initPlayer(username, socket);
+			// addPlayer(&(server->activePlayer), player);
+			// addPlayerToRoom(room, player);
 			// Tăng số người chơi lên 1
 		}
 		// còn không thông báo đăng nhập thất bại
@@ -67,4 +62,5 @@ void handleLogin(char *body, int socket,char *result)
 			strcpy(result, "fail");
 		}
 	}
+	return user;
 }

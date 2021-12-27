@@ -1,4 +1,5 @@
 #include "user.h"
+
 User *initUser(char *username, char *password, int status)
 {
 	User *newUser = (User *)malloc(sizeof(User));
@@ -10,35 +11,33 @@ User *initUser(char *username, char *password, int status)
 	strcpy(newUser->username, username);
 	strcpy(newUser->password, password);
 	newUser->status = status;
-	newUser->next = NULL;
 	return newUser;
 }
-void addUser(User **users, User *user)
+void addUser(User *users[MAX_USER], User *user)
 {
-	User *cur = *users;
-	if (*users == NULL)
+	for (int i = 0; i < MAX_USER; i++)
 	{
-		*users = user;
-		return;
+		if (users[i] == NULL)
+		{
+			users[i] = user;
+			return;
+		}
 	}
-	while (cur->next != NULL)
-	{
-		cur = cur->next;
-	}
-	cur->next = user;
 	return;
 }
-User *searchUser(User *users, char *username)
+User *searchUser(User *users[MAX_USER], char *username)
 {
-	User *cur = users;
-	while (cur != NULL)
+	for (int i = 0; i < MAX_USER; i++)
 	{
-		if (strcmp(cur->username, username) == 0)
+		if (users[i] != NULL)
 		{
-			return cur;
+			if (strcmp(users[i]->username, username) == 0)
+			{
+				return users[i];
+			}
 		}
-		cur = cur->next;
 	}
+
 	return NULL;
 }
 
@@ -71,7 +70,7 @@ void readUsersFromFile(User **users, char *filename)
 	fclose(fo);
 	return;
 }
-void writeUsersToFile(User *users, char *filename)
+void writeUsersToFile(User *users[MAX_USER], char *filename)
 {
 	FILE *fo = fopen(filename, "w");
 	if (fo == NULL)
@@ -79,22 +78,49 @@ void writeUsersToFile(User *users, char *filename)
 		printf("File open failed\n");
 		return;
 	}
-	User *cur = users;
-	while (cur != NULL)
+	int i = 0;
+	while (users[i] != NULL)
 	{
-		printf("%s %s %d\n", cur->username, cur->password, cur->status);
-		fprintf(fo, "%s|%s|%d\n", cur->username, cur->password, cur->status);
-		cur = cur->next;
+		printf("%s %s %d\n", users[i]->username, users[i]->password, users[i]->status);
+		fprintf(fo, "%s|%s|%d\n", users[i]->username, users[i]->password, users[i]->status);
+		i++;
 	}
 	fclose(fo);
 	return;
 }
-void printUser(User *users)
+void printUser(User *user)
 {
-	User *cur = users;
-	while (cur != NULL)
+
+	printf("%s %s %d\n", user->username, user->password, user->status);
+}
+void makeUsersNull(User *users[MAX_USER])
+{
+	for (int i = 0; i < MAX_USER; i++)
 	{
-		printf("%s %s %d\n", cur->username, cur->password, cur->status);
-		cur = cur->next;
+		users[i] = NULL;
 	}
 }
+
+void printAllUsers(User *users[MAX_USER])
+{
+	for(int i=0;i<MAX_USER;i++)
+	{
+		if(users[i]!=NULL)
+		{
+			printUser(users[i]);
+		}
+	}
+}
+// void main()
+// {
+// 	User *users[MAX_USER];
+// 	makeUsersNull(users);
+// 	readUsersFromFile(users, "../file/user.txt");
+// 	for (int i = 0; i < MAX_USER; i++)
+// 	{
+// 		if (users[i] != NULL)
+// 		{
+// 			printUser(users[i]);
+// 		}
+// 	}
+// }

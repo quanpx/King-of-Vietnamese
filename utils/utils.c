@@ -26,3 +26,7 @@ void modify_message(int cmd, char *body, char *message)
 
     // cmd|length|body
 }
+void convert_number_to_string(int number,char *num_in_string)
+{
+    sprintf(num_in_string,"%d",number);
+}

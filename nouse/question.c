@@ -1,12 +1,6 @@
 #include "question.h"
 #include<pthread.h>
 #include "../utils/utils.h"
-extern pthread_mutex_t mutex;
-extern pthread_cond_t cond;
-extern Room *room;
-int no_question = 0;
-Question *questions[MAX_QUESTION];
-
 
 Question *initQuest(char *quest, char *answer, int point)
 {
@@ -147,6 +141,7 @@ void sendQuestion(Question *quest)
 {
 	 char message[256];
 	 bzero(message,256);
+	Room *room;
 	for (int i = 0; i < room->no_player; i++)
 	{
 		if (room->players[i] != NULL)
@@ -163,6 +158,7 @@ void receiveAnswer(Player *player, Question *quest)
 {
 	char message[256];
 	bzero(message, 256);
+	int no_question;
 	while(read(player->socket, message, sizeof(message)) >= 0)
 	{
 		/*

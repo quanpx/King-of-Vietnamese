@@ -1,3 +1,6 @@
+
+#ifndef ENUM_COMMAND
+#define ENUM_COMMAND
 typedef enum commnand
 {
     LOGIN, //login
@@ -14,3 +17,5 @@ typedef enum commnand
     SCHRM, //SCHRM
 
 }Command;
+
+#endif //ENUM_COMMAND
