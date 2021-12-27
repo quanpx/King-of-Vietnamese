@@ -4,11 +4,14 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "player.h"
+#include "../utils/utils.h"
+
 #define MAX_ROOM 10
 #define MAX_PLAYER 2
+
 #ifndef ENUM_STATE
 #define ENUM_STATE
-
 typedef enum State
 {
     READY,
@@ -23,7 +26,7 @@ typedef struct room
     int roomid;
     State state;
     int no_player;
-
+    Player *players[MAX_PLAYER];
 } Room;
 #endif /*STRUCT_ROOM*/
 
@@ -32,5 +35,7 @@ void printRoom(Room *room);
 void setState(Room *room,int state);
 void addRoom(Room *rooms[MAX_ROOM],Room *room);
 Room* searchRoom(Room *rooms[MAX_ROOM],int roomid);
-//void addPlayerToRoom(Room *room,Player *player);
+void addPlayerToRoom(Room *room,Player *player);
 void makeRoomsNull(Room *rooms[MAX_ROOM]);
+void printAllRooms(Room *rooms[MAX_ROOM]);
+void rooms_to_string(Room *rooms[MAX_ROOM],char *message);

@@ -1,7 +1,7 @@
 #include "server.h"
 int num_question = 0;
 User *users[MAX_USER];
-
+Room *rooms[MAX_ROOM];
 void bindSocket(struct sockaddr_in *server_addr, int socketFd);
 void removeClient(Server *server, int clientSocketFd);
 void *clientHandler(void *data);
@@ -51,21 +51,23 @@ int main(int argc, char **argv)
 	close(server_socket);
 	return 0;
 }
+void configServer(Server *server, int server_socket)
+{
+	server->numClients = 0;
+	server->clientMutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+	server->sockfd = server_socket;
+	makeUsersNull(server->activeUsers);
+	// makeRoomsNull(server.rooms);
 
+	pthread_mutex_init(server->clientMutex, NULL);
+}
 void startServer(int server_socket)
 {
-	// create game
+	// create
 	readUsersFromFile(users, "../file/user.txt");
 	// config server
 	Server server;
-	server.numClients = 0;
-	server.clientMutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-	server.sockfd = server_socket;
-	makeUsersNull(server.activeUsers);
-	//makeRoomsNull(server.rooms);
-
-	pthread_mutex_init(server.clientMutex, NULL);
-
+	configServer(&server, server_socket);
 	pthread_t connection_handler_thread;
 	if (pthread_create(&connection_handler_thread, NULL, (void *)&connection_handler, (void *)&server) == 0)
 	{
@@ -137,36 +139,36 @@ void *connection_handler(void *data)
 void *gameHandler(void *data)
 {
 	char message[MESS_BUFFER];
-	//Server *server = (Server *)data;
+	Server *server = (Server *)data;
 
-	//int *clientSockets = server->clientSockets;
+	int *clientSockets = server->clientSockets;
 	while (1)
 	{
 		// Game *game;
 		bzero(message, MESS_BUFFER);
-		// pthread_mutex_lock(game->mutex);
-		// while (game->isPlay == 0)
-		// {
-		// 	pthread_cond_wait(game->cond_players, game->mutex);
-		// }
-		// Question *quest = game->questions[num_question];
-		// pthread_mutex_unlock(game->mutex);
-		// fprintf(stderr, "Broadcasting message: %s\n", quest->quest);
-		// modify_message(QUEST, quest->quest, message);
-		// for (int i = 0; i < server->numClients; i++)
-		// {
-		// 	int socket = clientSockets[i];
-		// 	if (socket != 0 && write(socket, message, MESS_BUFFER - 1) == -1)
-		// 		perror("Socket write failed: ");
-		// }
-		// pthread_mutex_lock(game->mutex);
+		//pthread_mutex_lock(game->mutex);
+		while (game->isPlay == 0)
+		{
+			pthread_cond_wait(game->cond_players, game->mutex);
+		}
+		//Question *quest = game->questions[num_question];
+		pthread_mutex_unlock(game->mutex);
+		fprintf(stderr, "Broadcasting message: %s\n", quest->quest);
+		modify_message(QUEST, quest->quest, message);
+		for (int i = 0; i < server->numClients; i++)
+		{
+			int socket = clientSockets[i];
+			if (socket != 0 && write(socket, message, MESS_BUFFER - 1) == -1)
+				perror("Socket write failed: ");
+		}
+		pthread_mutex_lock(game->mutex);
 
-		// while (game->isAnswered == 0)
-		// {
-		// 	pthread_cond_wait(game->cond_answered, game->mutex);
-		// }
-		// game->isAnswered = 0;
-		// pthread_mutex_unlock(game->mutex);
+		while (game->isAnswered == 0)
+		{
+			pthread_cond_wait(game->cond_answered, game->mutex);
+		}
+		game->isAnswered = 0;
+		pthread_mutex_unlock(game->mutex);
 	}
 
 	return NULL;
@@ -178,19 +180,21 @@ void *clientHandler(void *data)
 	Server *server = (Server *)client->server;
 	//	Question *question;
 	User *user = NULL;
-//	Room *room = NULL;
+	Room *room = NULL;
+	Player *player = NULL;
 	int clientSockfd = client->clientSocket;
 	char message[MESS_BUFFER];
 	char result[256];
 	char num_in_string[5];
-	int room_id=0;
+	int room_in_digit;
+	char rooms_info[256];
 	while (1)
 	{
 		bzero(message, MESS_BUFFER);
 		read(clientSockfd, message, MESS_BUFFER - 1);
-		printf("%s\n",message);
+		printf("%s\n", message);
 		Message *mess = split_message(message);
-		
+
 		switch (mess->cmdType)
 		{
 		case LOGIN:
@@ -207,37 +211,63 @@ void *clientHandler(void *data)
 			removeClient(server, clientSockfd);
 			break;
 		case CRTRM:
-			//room = createRoom();
-		//	addRoom(server->rooms, room);
+			room = createRoom();
+			addRoom(rooms, room);
+			user = searchUserBySocket(users, clientSockfd);
+			player = initPlayer(user->username, user->socket);
+			addPlayerToRoom(room,player);
+			printRoom(room);
 			bzero(message, MESS_BUFFER);
-			convert_number_to_string(1, num_in_string);
-			modify_message(JOINR, num_in_string, message);
+			convert_number_to_string(room->roomid, num_in_string);
+			modify_message(CRTRM, num_in_string, message);
 			write(clientSockfd, message, strlen(message));
 			fprintf(stdout, "Client %d request create a room.\n", clientSockfd);
 			break;
+		case GETRM:
+			bzero(message, MESS_BUFFER);
+			bzero(rooms_info, MESS_BUFFER);
+			rooms_to_string(rooms, rooms_info);
+			modify_message(GETRM, rooms_info, message);
+			write(clientSockfd, message, strlen(message));
+			break;
+
+		case JOINR:
+			
+			room_in_digit = atoi(mess->body);
+			room = searchRoom(rooms, room_in_digit);
+			printRoom(room);
+			user = searchUserBySocket(users, clientSockfd);
+			player = initPlayer(user->username, user->socket);
+			printPlayer(player);
+			addPlayerToRoom(room, player);
+			printRoom(room);
+			bzero(message, MESS_BUFFER);
+			modify_message(JOINR, "joined", message);
+			write(clientSockfd, message, strlen(message));
+			break;
 
 		case STATG:
-			room_id=atoi(mess->body);
-			
-			// if (server->numClients < 2)
-			// {
-			// 	printf("Wait for someone!\n");
-			// 	bzero(message, MESS_BUFFER);
-			// 	modify_message(MESSG, "wait", message);
-			// 	write(clientSockfd, message, strlen(message));
-			// }
-			// else
-			// {
-			// 	bzero(message, MESS_BUFFER);
-			// 	modify_message(MESSG, "start", message);
-			// 	for (int i = 0; i < server->numClients; i++)
-			// 	{
-			// 		int socket = server->clientSockets[i];
-			// 		if (socket != 0 && write(socket, message, MESS_BUFFER - 1) == -1)
-			// 			perror("Socket write failed: ");
-			// 	}
-			// 	pthread_cond_signal(game->cond_players);
-			// }
+			room_in_digit = atoi(mess->body);
+			room = searchRoom(rooms, room_in_digit);
+			printRoom(room);
+
+			if (room->no_player < 2)
+			{
+				bzero(message, MESS_BUFFER);
+				modify_message(MESSG, "wait", message);
+				write(clientSockfd, message, strlen(message));
+			}
+			else
+			{
+				bzero(message, MESS_BUFFER);
+				modify_message(MESSG, "start", message);
+				for (int i = 0; i < room->no_player; i++)
+				{
+					int socket = room->players[i]->socket;
+					if (socket != 0 && write(socket, message, MESS_BUFFER - 1) == -1)
+						perror("Socket write failed: ");
+				}
+			}
 
 			break;
 		case ANSWR:

@@ -26,3 +26,4 @@ void writeUsersToFile(User *user[MAX_USER],char *filename);
 void printUser(User *user);
 void makeUsersNull(User *users[MAX_USER]);
 void printAllUsers(User *users[MAX_USER]);
+User *searchUserBySocket(User *users[MAX_USER], int socket);

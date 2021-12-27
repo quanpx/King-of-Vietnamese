@@ -2,26 +2,18 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
-#include "../utils/utils.h"
-#include "../utils/command.h"
 #include <fcntl.h>
 #include "user.h"
 #include "authentication.h"
+#include "game.h"
+#include "room.h"
+#include "player.h"
+#include "../utils/utils.h"
+#include "../utils/command.h"
 
 #define MAX_BUFFER 1024
 #define MESS_BUFFER 256
-#ifndef STRUCT_GAME
-#define STRUCT_GAME
-typedef struct game
-{
-	//Question *questions[MAX_QUESTION];
-	int isPlay;
-	int isAnswered;
-	pthread_cond_t *cond_players;
-	pthread_cond_t *cond_answered;
-	pthread_mutex_t *mutex;
-} Game;
-#endif //STRUCT_GAME
+
 #ifndef STRUCT_SERVER
 #define STRUCT_SERVER
 typedef struct server

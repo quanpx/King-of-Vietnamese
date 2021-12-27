@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
+#define MAX_PLAYER 2
 #ifndef STRUCT_PLAYER
 #define STRUCT_PLAYER
 typedef struct player
@@ -18,7 +19,7 @@ typedef struct player
 
 Player *initPlayer(char* username,int socket);
 int getTotalPoint(Player *player);
-void printPlayers(Player *player);
-Player *searchPlayer(Player *players,char *username);
-void addPlayer(Player **players,Player *player);
+void printPlayer(Player *player);
+Player *searchPlayer(Player *players[MAX_PLAYER],char *username);
+void addPlayer(Player *players[MAX_PLAYER],Player *player);
 void updatePoint(Player *player,int num_question,int point);

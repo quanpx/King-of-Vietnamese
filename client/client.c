@@ -30,11 +30,12 @@ void login(int sockff);
 void playGround(int sock);
 void showMenu();
 void createRoom();
-void joinRoom();
-void startGame(int sock,char *roomId);
+void joinRoom(int socket, char *roomId);
+void startGame(int sock, char *roomId);
 void showMenuInRoom(char *roomId);
 void playGame(int sock);
-
+void getRoom(int socket);
+void inRoom(int socket, char *roomId);
 int main(int argc, const char **argv)
 {
 
@@ -161,12 +162,6 @@ void playGround(int server_socket)
                                     login(server_socket);
                                 }
                                 break;
-                            // case JOINR:
-                            //     printf("You have created room %s\n",messg->body);
-                            //     sleep(1);
-                            //     system("clear");
-                            //     playGame(server_socket);
-                            //     break;
                             default:
                                 break;
                             }
@@ -186,7 +181,8 @@ void playGround(int server_socket)
                             playGame(server_socket);
                             break;
                         case 2:
-                            joinRoom();
+                            getRoom(server_socket);
+                            selectRoom(server_socket);
                             break;
                         case 0:
 
@@ -231,12 +227,16 @@ void playGame(int server_socket)
                             messg = split_message(message);
                             switch (messg->cmdType)
                             {
-                            case JOINR:
-                                strcpy(roomId,messg->body);
+                            case CRTRM:
+                                strcpy(roomId, messg->body);
                                 printf("You have created room %s\n", messg->body);
                                 sleep(1);
                                 system("clear");
                                 showMenuInRoom(messg->body);
+                                inRoom(server_socket, roomId);
+                                break;
+                            case JOINR:
+                                printf("%s\n", messg->body);
                                 break;
                             default:
                                 break;
@@ -253,9 +253,10 @@ void playGame(int server_socket)
                         switch (select)
                         {
                         case 1:
-                            startGame(server_socket,roomId);
+                            startGame(server_socket, roomId);
                             break;
-                        case 2: playGround(server_socket);
+                        case 2:
+                            playGround(server_socket);
                             break;
                         default:
 
@@ -267,12 +268,86 @@ void playGame(int server_socket)
         }
     }
 }
-void startGame(int server_socket,char *roomId)
+void selectRoom(int server_socket)
+{
+    char message[256];
+    bzero(message, 256);
+    Message *messg;
+    setNonBlock(0);
+    setNonBlock(server_socket);
+    char roomId[2];
+    while (1)
+    {
+        // Reset the fd set each time since select() modifies it
+        fd_set clientFds;
+        FD_ZERO(&clientFds);
+        FD_SET(server_socket, &clientFds);
+        FD_SET(0, &clientFds);
+        if (select(FD_SETSIZE, &clientFds, NULL, NULL, NULL) != -1) // wait for an available fd
+        {
+            for (int fd = 0; fd < FD_SETSIZE; fd++)
+            {
+                if (FD_ISSET(fd, &clientFds))
+                {
+                    if (fd == server_socket) // receive data from server
+                    {
+
+                        while (read(server_socket, message, sizeof(message)) > 0)
+                        {
+
+                            messg = split_message(message);
+                            switch (messg->cmdType)
+                            {
+                            case GETRM:
+                                printf("Available rooms\n");
+                                printf("%s\n", messg->body);
+                                printf("Enter room id to join room.Enter 0 for exist\n");
+
+                                break;
+                            case JOINR:
+                                strcpy(roomId, messg->body);
+                                printf("You have joined room %s\n", messg->body);
+                                sleep(1);
+                                system("clear");
+                                showMenuInRoom(messg->body);
+                                inRoom(server_socket, roomId);
+
+                            default:
+                                break;
+                            }
+                            bzero(message, MESS_BUFFER);
+                        }
+                    }
+                    else if (fd == 0) // read from keyboard (stdin) and send to server
+                    {
+
+                        int select = 0;
+                        char choice[2];
+                        scanf("%d", &select);
+                        while (getchar() != '\n')
+                        {
+                            /* code */
+                        }
+
+                        bzero(choice, 2);
+                        convert_number_to_string(select, choice);
+                        bzero(message, MESS_BUFFER);
+                        modify_message(JOINR, choice, message);
+                        printf("%s\n", message);
+                        write(server_socket, message, strlen(message));
+                    }
+                }
+            }
+        }
+    }
+}
+void startGame(int server_socket, char *roomId)
 {
     char message[MESS_BUFFER];
     bzero(message, MESS_BUFFER);
     modify_message(STATG, roomId, message);
-    send(server_socket, message, strlen(message), 0);
+    printf("%s %s\n",message,roomId);
+    write(server_socket, message, strlen(message));
 }
 void showMenu()
 {
@@ -300,7 +375,105 @@ void createRoom(int sock)
     modify_message(CRTRM, "create rooom", message);
     write(sock, message, strlen(message));
 }
-void joinRoom()
+void getRoom(int sockfd)
 {
-    printf("Joined!\n");
+    char message[MESS_BUFFER];
+    bzero(message, MESS_BUFFER);
+    modify_message(GETRM, "get", message);
+    write(sockfd, message, strlen(message));
+}
+void joinRoom(int socket, char *roomid)
+{
+    char message[MESS_BUFFER];
+    bzero(message, MESS_BUFFER);
+    modify_message(JOINR, roomid, message);
+    write(socket, message, strlen(message));
+}
+void inRoom(int server_socket, char *roomId)
+{
+    char message[256];
+    bzero(message, 256);
+    Message *messg;
+    setNonBlock(0);
+    setNonBlock(server_socket);
+    while (1)
+    {
+        // Reset the fd set each time since select() modifies it
+        fd_set clientFds;
+        FD_ZERO(&clientFds);
+        FD_SET(server_socket, &clientFds);
+        FD_SET(0, &clientFds);
+        if (select(FD_SETSIZE, &clientFds, NULL, NULL, NULL) != -1) // wait for an available fd
+        {
+            for (int fd = 0; fd < FD_SETSIZE; fd++)
+            {
+                if (FD_ISSET(fd, &clientFds))
+                {
+                    if (fd == server_socket) // receive data from server
+                    {
+
+                        while (read(server_socket, message, sizeof(message)) > 0)
+                        {
+
+                            messg = split_message(message);
+                            switch (messg->cmdType)
+                            {
+                            case STATG:
+
+                                printf("%s\n", messg->body);
+
+                                break;
+                            case MESSG:
+                                if (strcmp(messg->body, "wait") == 0)
+                                {
+                                    printf("Waiting other player...\n");
+                                }
+                                else if (strcmp(messg->body, "done") == 0)
+                                {
+                                    printf("You finished your game!Bye\n");
+                                }
+                                else if (strcmp(messg->body, "start") == 0)
+                                {
+                                    for (int i = 3; i >= 1; i--)
+                                    {
+                                        printf("%d\n", i);
+                                        sleep(1);
+                                    }
+                                    printf("Start!\n");
+                                }
+                                else
+                                {
+                                    printf("%s\n", message);
+                                }
+                                break;
+
+                            default:
+                                break;
+                            }
+                            bzero(message, MESS_BUFFER);
+                        }
+                    }
+                    else if (fd == 0) // read from keyboard (stdin) and send to server
+                    {
+                        int select = 0;
+                        char choice[2];
+                        fgets(choice, 2, stdin);
+                        select = atoi(choice);
+                        switch (select)
+                        {
+                        case 1:
+                            startGame(server_socket, roomId);
+                            break;
+                        case 2:
+                            playGround(server_socket);
+                            break;
+                        default:
+
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

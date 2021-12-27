@@ -6,6 +6,7 @@ typedef enum commnand
     LOGIN, //login
     LOGOT, //logout
     CRTRM, //create room
+    GETRM,// Get list rooms
     JOINR, //join game
     STATG, //Start Game
     STOPG, //Stop game

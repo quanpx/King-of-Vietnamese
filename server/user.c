@@ -111,16 +111,26 @@ void printAllUsers(User *users[MAX_USER])
 		}
 	}
 }
+
+User *searchUserBySocket(User *users[MAX_USER],int socket)
+{
+	for(int i=0;i<MAX_USER;i++)
+	{
+		if(users[i]!=NULL)
+		{
+			if(users[i]->socket==socket)
+			{
+				return users[i];
+			}
+		}
+	}
+}
 // void main()
 // {
 // 	User *users[MAX_USER];
 // 	makeUsersNull(users);
 // 	readUsersFromFile(users, "../file/user.txt");
-// 	for (int i = 0; i < MAX_USER; i++)
-// 	{
-// 		if (users[i] != NULL)
-// 		{
-// 			printUser(users[i]);
-// 		}
-// 	}
+// 	users[1]->socket=2;
+// 	User *user=searchUserBySocket(users,2);
+// 	printUser(user);
 // }
