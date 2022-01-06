@@ -10,6 +10,7 @@
 #include "player.h"
 #include "../utils/utils.h"
 #include "../utils/command.h"
+#include "question.h"
 
 #define MAX_BUFFER 1024
 #define MESS_BUFFER 256
@@ -24,6 +25,7 @@ typedef struct server
 	int numClients;
 	int clientSockets[MAX_BUFFER];
 	User *activeUsers[MAX_USER];
+	Game *game;
   //	Room *rooms[MAX_ROOM];
 } Server;
 #endif //STRUCT_SERVER

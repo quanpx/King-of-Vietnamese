@@ -2,6 +2,9 @@
 int num_question = 0;
 User *users[MAX_USER];
 Room *rooms[MAX_ROOM];
+Question *questions[MAX_QUESTION];
+int numQuestion = 0;
+
 void bindSocket(struct sockaddr_in *server_addr, int socketFd);
 void removeClient(Server *server, int clientSocketFd);
 void *clientHandler(void *data);
@@ -11,6 +14,7 @@ void *connection_handler(void *data);
 
 int main(int argc, char **argv)
 {
+	readUsersFromFile(users, "../file/user.txt");
 	// readUsersFromFile(&users, "../file/user.txt");
 	// room = initRoom();
 	//Đọc user từ file
@@ -38,7 +42,7 @@ int main(int argc, char **argv)
 	else
 		printf("Socket successfully binded..\n");
 	// bindSocket(&server_addr, server_socket);
-	if (listen(server_socket, 3) != 0)
+	if (listen(server_socket, 5) != 0)
 	{
 		printf("Listen failed...\n");
 		exit(0);
@@ -63,11 +67,40 @@ void configServer(Server *server, int server_socket)
 }
 void startServer(int server_socket)
 {
+	Game *game = (Game *)malloc(sizeof(Game));
+	readQuestsFromFile(game->questions, "../file/question.txt");
+	game->isPlay = 0;
+	game->isAnswered = 0;
+	game->mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+	if (game->mutex == NULL)
+	{
+		printf("Allocate failed!\n");
+		exit(0);
+	}
+	pthread_mutex_init(game->mutex, NULL);
+	game->cond_players = (pthread_cond_t *)malloc(sizeof(pthread_cond_t));
+	if (game->cond_players == NULL)
+	{
+		printf("Allocate failed!\n");
+		exit(0);
+	}
+	pthread_cond_init(game->cond_players, NULL);
+
+
+	printQuests(game->questions);
+	game->cond_answered = (pthread_cond_t *)malloc(sizeof(pthread_cond_t));
+	if (game->cond_answered == NULL)
+	{
+		printf("Allocate failed!\n");
+		exit(0);
+	}
+	pthread_cond_init(game->cond_answered, NULL);
 	// create
-	readUsersFromFile(users, "../file/user.txt");
+
 	// config server
 	Server server;
 	configServer(&server, server_socket);
+	server.game = game;
 	pthread_t connection_handler_thread;
 	if (pthread_create(&connection_handler_thread, NULL, (void *)&connection_handler, (void *)&server) == 0)
 	{
@@ -142,19 +175,21 @@ void *gameHandler(void *data)
 	Server *server = (Server *)data;
 
 	int *clientSockets = server->clientSockets;
+	Game *game = server->game;
 	while (1)
 	{
-		// Game *game;
+
 		bzero(message, MESS_BUFFER);
-		//pthread_mutex_lock(game->mutex);
+		pthread_mutex_lock(game->mutex);
 		while (game->isPlay == 0)
 		{
 			pthread_cond_wait(game->cond_players, game->mutex);
 		}
-		//Question *quest = game->questions[num_question];
+		Question *quest = game->questions[num_question];
 		pthread_mutex_unlock(game->mutex);
 		fprintf(stderr, "Broadcasting message: %s\n", quest->quest);
 		modify_message(QUEST, quest->quest, message);
+		
 		for (int i = 0; i < server->numClients; i++)
 		{
 			int socket = clientSockets[i];
@@ -178,7 +213,8 @@ void *clientHandler(void *data)
 {
 	Client *client = (Client *)data;
 	Server *server = (Server *)client->server;
-	//	Question *question;
+	Game *game = (Game *)server->game;
+	Question *question=NULL;
 	User *user = NULL;
 	Room *room = NULL;
 	Player *player = NULL;
@@ -188,6 +224,7 @@ void *clientHandler(void *data)
 	char num_in_string[5];
 	int room_in_digit;
 	char rooms_info[256];
+	char socketStr[2];
 	while (1)
 	{
 		bzero(message, MESS_BUFFER);
@@ -215,7 +252,7 @@ void *clientHandler(void *data)
 			addRoom(rooms, room);
 			user = searchUserBySocket(users, clientSockfd);
 			player = initPlayer(user->username, user->socket);
-			addPlayerToRoom(room,player);
+			addPlayerToRoom(room, player);
 			printRoom(room);
 			bzero(message, MESS_BUFFER);
 			convert_number_to_string(room->roomid, num_in_string);
@@ -232,7 +269,7 @@ void *clientHandler(void *data)
 			break;
 
 		case JOINR:
-			
+
 			room_in_digit = atoi(mess->body);
 			room = searchRoom(rooms, room_in_digit);
 			printRoom(room);
@@ -242,7 +279,7 @@ void *clientHandler(void *data)
 			addPlayerToRoom(room, player);
 			printRoom(room);
 			bzero(message, MESS_BUFFER);
-			modify_message(JOINR, "joined", message);
+			modify_message(JOINR, "join", message);
 			write(clientSockfd, message, strlen(message));
 			break;
 
@@ -266,48 +303,57 @@ void *clientHandler(void *data)
 					int socket = room->players[i]->socket;
 					if (socket != 0 && write(socket, message, MESS_BUFFER - 1) == -1)
 						perror("Socket write failed: ");
+					printf("send to %d\n",socket);
 				}
+				pthread_mutex_lock(game->mutex);
+				game->isPlay = 1;
+
+				pthread_cond_signal(game->cond_players);
+				pthread_mutex_unlock(game->mutex);
+
+
 			}
 
 			break;
 		case ANSWR:
-			//	question = game->questions[num_question];
-			// printQuestion(question);
-			// printf("%s\n",mess->body);
-			// if (strcmp(question->answer, mess->body) == 0)
-			// {
-			// 	bzero(result, MESS_BUFFER);
-			// 	sprintf(socketStr, "%d", clientSockfd);
-			// 	strcat(result, "Client ");
-			// 	strcat(result, socketStr);
-			// 	strcat(result, " answered correctly!");
-			// 	bzero(message,MESS_BUFFER);
-			// 	modify_message(ANSWR, result, message);
-			// 	for (int i = 0; i < server->numClients; i++)
-			// 	{
-			// 		int socket = server->clientSockets[i];
-			// 		if (socket != 0 && socket != clientSockfd)
-			// 		{
-			// 			write(socket, message, strlen(message));
-			// 		}
-			// 	}
-			// 	bzero(message, MESS_BUFFER);
-			// 	bzero(result, 256);
-			// 	modify_message(ANSWR, "Correct!", message);
-			// 	write(clientSockfd, message, strlen(message));
+			question = game->questions[num_question];
+			printQuestion(question);
+			printf("%s\n",mess->body);
+			if (strcmp(question->answer, mess->body) == 0)
+			{
+				bzero(result, MESS_BUFFER);
+				bzero(socketStr,2);
+				sprintf(socketStr, "%d", clientSockfd);
+				strcat(result, "Client ");
+				strcat(result, socketStr);
+				strcat(result, " answered correctly!");
+				bzero(message,MESS_BUFFER);
+				modify_message(ANSWR, result, message);
+				for (int i = 0; i < server->numClients; i++)
+				{
+					int socket = server->clientSockets[i];
+					if (socket != 0 && socket != clientSockfd)
+					{
+						write(socket, message, strlen(message));
+					}
+				}
+				bzero(message, MESS_BUFFER);
+				bzero(result, 256);
+				modify_message(ANSWR, "Correct!", message);
+				write(clientSockfd, message, strlen(message));
 
-			// 	pthread_mutex_lock(game->mutex);
-			// 	num_question++;
-			// 	game->isAnswered = 1;
-			// 	pthread_mutex_unlock(game->mutex);
-			// 	pthread_cond_signal(game->cond_answered);
-			// }
-			// else
-			// {
-			// 	bzero(message, MESS_BUFFER);
-			// 	modify_message(ANSWR, "Inorrect!", message);
-			// 	write(clientSockfd, message, strlen(message));
-			// }
+				pthread_mutex_lock(game->mutex);
+				num_question++;
+				game->isAnswered = 1;
+				pthread_mutex_unlock(game->mutex);
+				pthread_cond_signal(game->cond_answered);
+			}
+			else
+			{
+				bzero(message, MESS_BUFFER);
+				modify_message(ANSWR, "Inorrect!", message);
+				write(clientSockfd, message, strlen(message));
+			}
 
 		default:
 			break;
