@@ -10,7 +10,7 @@
 typedef struct player
 {
     char username[20];
-    int point[14];
+    int point;
     int socket;
     struct player *next;
 }Player;
@@ -22,4 +22,5 @@ int getTotalPoint(Player *player);
 void printPlayer(Player *player);
 Player *searchPlayer(Player *players[MAX_PLAYER],char *username);
 void addPlayer(Player *players[MAX_PLAYER],Player *player);
-void updatePoint(Player *player,int num_question,int point);
+void updatePoint(Player *player);
+Player *getPlayerBySocket(Player *player[MAX_PLAYER],int socket);

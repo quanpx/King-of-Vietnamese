@@ -11,6 +11,7 @@ void *clientHandler(void *data);
 void *gameHandler(void *data);
 void startServer(int server_socket);
 void *connection_handler(void *data);
+void final_result(Player *player1, Player *player2, char *win_result, char *lose_result);
 
 int main(int argc, char **argv)
 {
@@ -71,6 +72,7 @@ void startServer(int server_socket)
 	readQuestsFromFile(game->questions, "../file/question.txt");
 	game->isPlay = 0;
 	game->isAnswered = 0;
+	game->room = NULL;
 	game->mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
 	if (game->mutex == NULL)
 	{
@@ -85,7 +87,6 @@ void startServer(int server_socket)
 		exit(0);
 	}
 	pthread_cond_init(game->cond_players, NULL);
-
 
 	printQuests(game->questions);
 	game->cond_answered = (pthread_cond_t *)malloc(sizeof(pthread_cond_t));
@@ -171,14 +172,20 @@ void *connection_handler(void *data)
 
 void *gameHandler(void *data)
 {
-	char message[MESS_BUFFER];
+	char message[MAX_BUFFER];
+	char win_message[MESS_BUFFER];
+	char lose_message[MESS_BUFFER];
 	Server *server = (Server *)data;
 
 	int *clientSockets = server->clientSockets;
 	Game *game = server->game;
+	Room *room = NULL;
+	char result[80];
+	char win_result[256];
+	char lose_result[256];
 	while (1)
 	{
-
+		room = (Room *)game->room;
 		bzero(message, MESS_BUFFER);
 		pthread_mutex_lock(game->mutex);
 		while (game->isPlay == 0)
@@ -186,24 +193,75 @@ void *gameHandler(void *data)
 			pthread_cond_wait(game->cond_players, game->mutex);
 		}
 		Question *quest = game->questions[num_question];
-		pthread_mutex_unlock(game->mutex);
-		fprintf(stderr, "Broadcasting message: %s\n", quest->quest);
-		modify_message(QUEST, quest->quest, message);
-		
-		for (int i = 0; i < server->numClients; i++)
+		if (quest == NULL)
 		{
-			int socket = clientSockets[i];
-			if (socket != 0 && write(socket, message, MESS_BUFFER - 1) == -1)
-				perror("Socket write failed: ");
-		}
-		pthread_mutex_lock(game->mutex);
+			printRoom(room);
+			bzero(message, MAX_BUFFER);
+			bzero(lose_result, 256);
+			bzero(win_result, 256);
+			bzero(win_message, MAX_BUFFER);
+			bzero(lose_message, MAX_BUFFER);
+			final_result(room->players[0], room->players[1], win_result, lose_result);
+			modify_message(MESSG, win_result, win_message);
+			modify_message(MESSG, lose_result, lose_message);
 
-		while (game->isAnswered == 0)
-		{
-			pthread_cond_wait(game->cond_answered, game->mutex);
+			if (room->players[0]->point > room->players[1]->point)
+			{
+
+				// win
+				write(room->players[0]->socket, win_message, MESS_BUFFER - 1);
+
+				// lose
+				write(room->players[1]->socket, lose_message, MESS_BUFFER - 1);
+			}
+			else if (room->players[0]->point < room->players[1]->point)
+			{
+				// win
+				write(room->players[0]->socket, lose_message, MESS_BUFFER - 1);
+
+				// lose
+				write(room->players[1]->socket, win_message, MESS_BUFFER - 1);
+			}
+			else
+			{
+				for (int i = 0; i < server->numClients; i++)
+				{
+					int socket = clientSockets[i];
+					if (socket != 0 && write(socket, win_message, MESS_BUFFER - 1) == -1)
+						perror("Socket write failed: ");
+				}
+			}
+
+			modify_message(MESSG, "Game finished!", message);
+
+			for (int i = 0; i < server->numClients; i++)
+			{
+				int socket = clientSockets[i];
+				if (socket != 0 && write(socket, message, MESS_BUFFER - 1) == -1)
+					perror("Socket write failed: ");
+			}
 		}
-		game->isAnswered = 0;
-		pthread_mutex_unlock(game->mutex);
+		else
+		{
+			pthread_mutex_unlock(game->mutex);
+			fprintf(stderr, "Broadcasting message: %s\n", quest->quest);
+			modify_message(QUEST, quest->quest, message);
+
+			for (int i = 0; i < server->numClients; i++)
+			{
+				int socket = clientSockets[i];
+				if (socket != 0 && write(socket, message, MESS_BUFFER - 1) == -1)
+					perror("Socket write failed: ");
+			}
+			pthread_mutex_lock(game->mutex);
+
+			while (game->isAnswered == 0)
+			{
+				pthread_cond_wait(game->cond_answered, game->mutex);
+			}
+			game->isAnswered = 0;
+			pthread_mutex_unlock(game->mutex);
+		}
 	}
 
 	return NULL;
@@ -214,7 +272,7 @@ void *clientHandler(void *data)
 	Client *client = (Client *)data;
 	Server *server = (Server *)client->server;
 	Game *game = (Game *)server->game;
-	Question *question=NULL;
+	Question *question = NULL;
 	User *user = NULL;
 	Room *room = NULL;
 	Player *player = NULL;
@@ -250,10 +308,13 @@ void *clientHandler(void *data)
 		case CRTRM:
 			room = createRoom();
 			addRoom(rooms, room);
+			pthread_mutex_lock(game->mutex);
+			game->room = room;
+			pthread_mutex_unlock(game->mutex);
 			user = searchUserBySocket(users, clientSockfd);
 			player = initPlayer(user->username, user->socket);
 			addPlayerToRoom(room, player);
-			printRoom(room);
+			printRoom(game->room);
 			bzero(message, MESS_BUFFER);
 			convert_number_to_string(room->roomid, num_in_string);
 			modify_message(CRTRM, num_in_string, message);
@@ -303,31 +364,29 @@ void *clientHandler(void *data)
 					int socket = room->players[i]->socket;
 					if (socket != 0 && write(socket, message, MESS_BUFFER - 1) == -1)
 						perror("Socket write failed: ");
-					printf("send to %d\n",socket);
+					printf("send to %d\n", socket);
 				}
 				pthread_mutex_lock(game->mutex);
 				game->isPlay = 1;
 
 				pthread_cond_signal(game->cond_players);
 				pthread_mutex_unlock(game->mutex);
-
-
 			}
 
 			break;
 		case ANSWR:
 			question = game->questions[num_question];
 			printQuestion(question);
-			printf("%s\n",mess->body);
+			printf("%s\n", mess->body);
 			if (strcmp(question->answer, mess->body) == 0)
 			{
 				bzero(result, MESS_BUFFER);
-				bzero(socketStr,2);
+				bzero(socketStr, 2);
 				sprintf(socketStr, "%d", clientSockfd);
 				strcat(result, "Client ");
 				strcat(result, socketStr);
 				strcat(result, " answered correctly!");
-				bzero(message,MESS_BUFFER);
+				bzero(message, MESS_BUFFER);
 				modify_message(ANSWR, result, message);
 				for (int i = 0; i < server->numClients; i++)
 				{
@@ -340,6 +399,11 @@ void *clientHandler(void *data)
 				bzero(message, MESS_BUFFER);
 				bzero(result, 256);
 				modify_message(ANSWR, "Correct!", message);
+				player = getPlayerBySocket(room->players, clientSockfd);
+				pthread_mutex_lock(game->mutex);
+				updatePoint(player);
+				pthread_mutex_unlock(game->mutex);
+				printPlayer(player);
 				write(clientSockfd, message, strlen(message));
 
 				pthread_mutex_lock(game->mutex);
@@ -359,6 +423,53 @@ void *clientHandler(void *data)
 			break;
 		}
 		bzero(message, MESS_BUFFER);
+	}
+}
+void final_result(Player *player1, Player *player2, char *win_result, char *lose_result)
+{
+	printPlayer(player1);
+	printPlayer(player2);
+	char point[2];
+	if (player1->point > player2->point)
+	{
+
+		// win
+		bzero(point,2);
+		strcat(win_result, "You won with ");
+		sprintf(point, "%d", player1->point);
+		strcat(win_result, point);
+		strcat(win_result, " points");
+
+		// lose
+		bzero(point,2);
+		strcat(lose_result, "You losed with ");
+		sprintf(point, "%d", player2->point);
+		strcat(lose_result, point);
+		strcat(lose_result, " points");
+		printf("Player %s won! With %d points \n", player1->username, player1->point);
+	}
+	else if (player1->point < player2->point)
+	{
+		// win
+		bzero(point,2);
+		strcat(win_result, "You won with ");
+		sprintf(point, "%d", player2->point);
+		strcat(win_result, point);
+		strcat(win_result, " points");
+
+		// lose
+		bzero(point,2);
+		strcat(lose_result, "You losed with ");
+		sprintf(point, "%d", player1->point);
+		strcat(lose_result, point);
+		strcat(lose_result, " points");
+		printf("Player %s won! With %d points\n", player2->username, player2->point);
+	}
+	else
+	{
+		strcpy(lose_result, "Draw!");
+		strcpy(win_result, "Draw!");
+		printf("Draw with %d - %d\n", player1->point, player2->point);
 	}
 }
 void removeClient(Server *server, int clientSocketFd)

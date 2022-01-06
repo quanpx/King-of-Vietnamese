@@ -10,6 +10,7 @@ typedef struct game
 	pthread_cond_t *cond_players;
 	pthread_cond_t *cond_answered;
 	pthread_mutex_t *mutex;
+	Room *room;
 } Game;
 #endif //STRUCT GAME
 void playGame();

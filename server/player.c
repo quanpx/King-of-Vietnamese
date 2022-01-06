@@ -9,21 +9,14 @@ Player *initPlayer(char *username, int socket)
 		return NULL;
 	}
 	strcpy(player->username, username);
-	for (int i = 0; i < 14; i++)
-	{
-		player->point[i] = 0;
-	}
+	player->point=0;
 	player->socket = socket;
 	return player;
 }
 int getTotalPoint(Player *player)
 {
-	int point = 0;
-	for (int i = 0; i < 14; i++)
-	{
-		point += player->point[i];
-	}
-	return point;
+	
+	return player->point;
 }
 void addPlayer(Player *players[MAX_PLAYER], Player *player)
 {
@@ -54,7 +47,21 @@ void printPlayer(Player *player)
 
 	printf("%s has %d points\n", player->username, getTotalPoint(player));
 }
-void updatePoint(Player *player, int num_question, int point)
+void updatePoint(Player *player)
 {
-	player->point[num_question] = point;
+	player->point+=1;
+}
+
+Player *getPlayerBySocket(Player *players[MAX_PLAYER],int socket)
+{
+	for(int i=0;i<MAX_PLAYER;i++)
+	{
+		if(players[i]!=NULL)
+		{
+			if(players[i]->socket==socket)
+			{
+				return players[i];
+			}
+		}
+	}
 }
