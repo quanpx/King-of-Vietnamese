@@ -466,7 +466,8 @@ void playGame(int server_socket)
                                 }
                                 else
                                 {
-                                    printf("%s\n", message);
+                                    printf("%s\n", messg->body);
+                                    printf("Enter 'back' back to home!");
                                 }
                                 break;
                             case ANSWR:
@@ -485,7 +486,6 @@ void playGame(int server_socket)
 
                         fgets(answer, 50, stdin);
                         answer[strlen(answer) - 1] = '\0';
-
                         bzero(message, MESS_BUFFER);
                         modify_message(ANSWR, answer, message);
                         write(server_socket, message, strlen(message));
