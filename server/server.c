@@ -74,6 +74,7 @@ void startServer(int server_socket)
 	game->isAnswered = 0;
 	game->room = NULL;
 	game->mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+	
 	if (game->mutex == NULL)
 	{
 		printf("Allocate failed!\n");
