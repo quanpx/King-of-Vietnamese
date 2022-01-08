@@ -14,10 +14,10 @@
 #define ENUM_STATE
 typedef enum State
 {
-    READY,
-    PLAYING,
-    WAITING
-}State;
+    WAITING,
+    PLAYING
+
+} State;
 #endif /*ENUM_STATE */
 #ifndef STRUCT_ROOM
 #define STRUCT_ROOM
@@ -27,15 +27,18 @@ typedef struct room
     State state;
     int no_player;
     Player *players[MAX_PLAYER];
+    int flag;
 } Room;
 #endif /*STRUCT_ROOM*/
 
 Room *createRoom();
 void printRoom(Room *room);
-void setState(Room *room,int state);
-void addRoom(Room *rooms[MAX_ROOM],Room *room);
-Room* searchRoom(Room *rooms[MAX_ROOM],int roomid);
-void addPlayerToRoom(Room *room,Player *player);
+void setState(Room *room, int state);
+void addRoom(Room *rooms[MAX_ROOM], Room *room);
+Room *searchRoom(Room *rooms[MAX_ROOM], int roomid);
+void addPlayerToRoom(Room *room, Player *player);
 void makeRoomsNull(Room *rooms[MAX_ROOM]);
 void printAllRooms(Room *rooms[MAX_ROOM]);
-void rooms_to_string(Room *rooms[MAX_ROOM],char *message);
+void rooms_to_string(Room *rooms[MAX_ROOM], char *message);
+void readRoomsFromFile(Room *rooms[MAX_ROOM]);
+void writeRoomsToFile(Room *rooms[MAX_ROOM]);

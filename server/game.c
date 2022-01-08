@@ -1,6 +1,5 @@
 #include "game.h"
-#include "pthread.h"
-#include "../utils/utils.h"
+
 void playGame(Player *player)
 {
     int no_question;
@@ -16,41 +15,35 @@ void playGame(Player *player)
     write(player->socket, message, strlen(message));
     return;
 }
-void clientJoined(Player *player)
+Game *initGame()
 {
+    Game *game = (Game *)malloc(sizeof(Game));
+    readQuestsFromFile(game->questions, "../file/question.txt");
+    game->isPlay = 0;
+    game->isAnswered = 0;
+    game->room=NULL;
+    game->mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
 
-    Message *mess;
-    char message[256];
-    bzero(message, 256);
-    while (read(player->socket, message, sizeof(message)) > 0)
+    if (game->mutex == NULL)
     {
-        mess = split_message(message);
-        // Khi nhận được yêu câu băt đầu từ client , bắt đấù chơi game
-        if (strcmp(mess->body, "start") == 0)
-        {
-            // Player *player = searchPlayer(players, user->username);
-            // if (player == NULL)
-            // {
-            //     printf("Player not found\n");
-            // }
-            // else
-            // play game
-            //     pthread_mutex_lock(&mutex);
-            //     while (room->no_player < 2)
-            //     {
-            //     bzero(message, 256);
-            //     modify_message(1, "wait", message);
-            //     send(player->socket, message, strlen(message), 0);
-            //     pthread_cond_wait(&cond, &mutex);
-            //     }
-            //     pthread_mutex_unlock(&mutex);
-            //     if (questions[0] == NULL)
-            //     {
-            //         getQuestions(questions, "../file/question.txt");
-            //     }
-
-            //     playGame(player);
-            //
-        }
+        printf("Allocate failed!\n");
+        exit(0);
     }
+    pthread_mutex_init(game->mutex, NULL);
+    game->cond_players = (pthread_cond_t *)malloc(sizeof(pthread_cond_t));
+    if (game->cond_players == NULL)
+    {
+        printf("Allocate failed!\n");
+        exit(0);
+    }
+    pthread_cond_init(game->cond_players, NULL);
+    game->cond_answered = (pthread_cond_t *)malloc(sizeof(pthread_cond_t));
+    if (game->cond_answered == NULL)
+    {
+        printf("Allocate failed!\n");
+        exit(0);
+    }
+    pthread_cond_init(game->cond_answered, NULL);
+
+    return game;
 }

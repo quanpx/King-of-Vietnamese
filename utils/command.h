@@ -16,6 +16,12 @@ typedef enum commnand
     QUEST, //Question
     MESSG, //Message
     SCHRM, //SCHRM
+    BACK,
+    WAIT,
+    READY,
+    RESULT,
+    MESSG_NOT_FOUND,
+    BACK_OK
 
 }Command;
 

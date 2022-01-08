@@ -1,5 +1,7 @@
 #include <pthread.h>
+#include "../utils/utils.h"
 #include "question.h"
+#include "room.h"
 #ifndef STRUCT_GAME
 #define STRUCT_GAME
 typedef struct game
@@ -12,5 +14,6 @@ typedef struct game
 	pthread_mutex_t *mutex;
 	Room *room;
 } Game;
-#endif //STRUCT GAME
+#endif // STRUCT GAME
 void playGame();
+Game *initGame();

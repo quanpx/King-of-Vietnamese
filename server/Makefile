@@ -1,5 +1,5 @@
 CFLAGS = -Wall
-OBJFILES = user.o server.o authentication.o room.o player.o question.o ../utils/utils.o ../utils/notification.o
+OBJFILES = user.o server.o authentication.o room.o player.o question.o ../utils/utils.o ../utils/notification.o game.o
 TARGET = server
 all :$(TARGET)
 $(TARGET):$(OBJFILES)

@@ -5,6 +5,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 #define MAX_PLAYER 2
+#ifndef ENUM_ROLE
+#define ENUM_ROLE
+typedef enum role
+{
+  GUESS,
+  OWNER   
+}Role;
+
+#endif /* ENUM_PLAYER */
 #ifndef STRUCT_PLAYER
 #define STRUCT_PLAYER
 typedef struct player
@@ -12,7 +21,7 @@ typedef struct player
     char username[20];
     int point;
     int socket;
-    struct player *next;
+    Role role;
 }Player;
 
 #endif /* STRUCT_PLAYER */

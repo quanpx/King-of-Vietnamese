@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include "player.h"
-#include "room.h"
 #include "user.h"
 #define LIST_QUESTION 100
 #define MAX_QUESTION 15
