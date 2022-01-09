@@ -217,6 +217,7 @@ void *gameHandler(void *data)
 					perror("Socket write failed: ");
 			}
 			pthread_mutex_lock(game->mutex);
+			game->room->flag=0;
 			game->isPlay = 0;
 			num_question = 0;
 			pthread_cond_signal(game->cond_players);
@@ -337,7 +338,7 @@ void *clientHandler(void *data)
 				write(clientSockfd, message, strlen(message));
 
 				bzero(message, MESS_BUFFER);
-				modify_message(BACK, "Người chơi tham gia phòng!\n Nhập 'start' để bắt đầu!", message);
+				modify_message(OPONENT_JOIN, "Người chơi tham gia phòng!\n Nhập 'start' để bắt đầu!", message);
 				for (int i = 0; i < room->no_player; i++)
 				{
 					if (room->players[i] != NULL)
