@@ -16,12 +16,13 @@ typedef enum commnand
     QUEST, //Question
     MESSG, //Message
     SCHRM, //SCHRM
-    BACK,
-    WAIT,
-    READY,
-    RESULT,
-    MESSG_NOT_FOUND,
-    BACK_OK
+    BACK, //Quay trở vể home menu
+    WAIT, // gửi thông tin đến client cần đợi 
+    READY, // gửi thông tin đến client là người chơi sắn sàng 
+    RESULT, //gửi kết quả đến client 
+    MESSG_NOT_FOUND, // gửi kết quả không tìm thấy đến client 
+    BACK_OK, // quay trở lại thành công đến client 
+    OPONENT_JOIN // guiwt thông báo đến client là người chơi đã tham gia phòn
 
 }Command;
 

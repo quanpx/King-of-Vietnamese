@@ -146,6 +146,9 @@ void startClient(int server_socket)
                                 showMenuInRoom(roomId);
 
                                 break;
+                            case OPONENT_JOIN:
+                                printf("%s\n",messg->body);
+                                break;
                             case MESSG:
                                 if (strcmp(messg->body, "wait") == 0)
                                 {
@@ -171,8 +174,10 @@ void startClient(int server_socket)
                                 }
                                 break;
                             case QUEST:
-                                printf("Question :%s\n", messg->body);
-                                printf("Your answers:\n");
+                                system("clear");
+                                printf("Câu hỏi:%s\n", messg->body);
+                                printf("Nhập 'answr <đáp án>' để trả lời câu hỏi!\n");
+                                printf("Đáp án của bạn:\n");
 
                                 break;
                             case ANSWR:
@@ -190,7 +195,6 @@ void startClient(int server_socket)
                                 break;
                             case READY:
                                 printf("%s\n", messg->body);
-
                                 break;
                             case MESSG_NOT_FOUND:
                                 printf("%s\n", messg->body);
@@ -211,7 +215,6 @@ void startClient(int server_socket)
                     else if (fd == 0) // read from keyboard (stdin) and send to server
                     {
 
-                        fflush(stdout);
                         bzero(command, 20);
                         fgets(command, 50, stdin);
                         command[strlen(command) - 1] = '\0';
@@ -267,21 +270,21 @@ void startClient(int server_socket)
 }
 void homeMenu()
 {
-    printf("=========================== %s ==============================\n", "Chào mừng đến với Vua Tiếng Việt");
-    printf("Hãy chọn chức năng!\n");
+    printf("==================== %s =======================\n", "Chào mừng đến với Vua Tiếng Việt");
+    printf("Hãy chọn chức năng!\n\n");
     printf("1. Tạo phòng : Nhập 'crtrm'\n");
     printf("2. Xem danh sách phòng 'listr'\n");
     printf("0. Exit\n");
-    printf("==================== Xin cảm ơn! ===========================\n");
+    printf("============= Xin cảm ơn! =====================\n");
 }
 void showMenuInRoom(char *roomId)
 {
-    printf("============ Chào mừng đến phòng %s ================\n", roomId);
-    printf("Hãy chọn chức năng!\n");
+    printf("============ Chào mừng đến phòng %s ===========\n", roomId);
+    printf("Hãy chọn chức năng!\n\n");
     printf("1. Bắt đầu trò chơi : Nhập 'start'\n");
     printf("2. Quay trở lại : Nhập 'back'\n");
     printf("0. Exit\n");
-    printf("==================== Xin cảm ơn! ===========================\n");
+    printf("============= Xin cảm ơn! =====================\n");
 }
 void getRoom(int sockfd)
 {
