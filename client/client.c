@@ -147,7 +147,7 @@ void startClient(int server_socket)
 
                                 break;
                             case OPONENT_JOIN:
-                                printf("%s\n",messg->body);
+                                printf("%s\n", messg->body);
                                 break;
                             case MESSG:
                                 if (strcmp(messg->body, "wait") == 0)
@@ -187,7 +187,11 @@ void startClient(int server_socket)
                                 break;
                             case RESULT:
                                 printf("%s\n", messg->body);
-                                printf("Nhập 'back' để quay trở lại!\n");
+                                printf("Trò chơi kết thúc!\n");
+                                sleep(2);
+                                system("clear");
+                                showMenuInRoom(roomId);
+
                                 break;
                             case WAIT:
                                 printf("%s\n", messg->body);
@@ -223,7 +227,6 @@ void startClient(int server_socket)
                         if (strlen(command) < 1)
                         {
                             printf("Câu lệnh không phù hợp!\n");
-                           
                         }
                         else
                         {

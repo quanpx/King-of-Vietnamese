@@ -217,9 +217,13 @@ void *gameHandler(void *data)
 					perror("Socket write failed: ");
 			}
 			pthread_mutex_lock(game->mutex);
-			game->room->flag=0;
+			game->room->flag = 0;
 			game->isPlay = 0;
 			num_question = 0;
+			for (int i = 0; i < room->no_player; i++)
+			{
+				room->players[i]->point = 0;
+			}
 			pthread_cond_signal(game->cond_players);
 			pthread_mutex_unlock(game->mutex);
 		}
