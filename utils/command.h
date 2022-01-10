@@ -5,6 +5,7 @@ typedef enum commnand
 {
     LOGIN,  // Đăng nhập
     LOGOT,  // Đăng xuất
+    SIGNU,  // Đăng ký
     CRTRM,  // Tạo phòng
     GETRM,  // Lấy danh sách phòng
     JOINR,  // Tham gia vào một phòng
@@ -22,6 +23,8 @@ typedef enum commnand
     OPONENT_JOIN, // gửi thông báo đến client là người chơi đã tham gia phòng,
     CORRECT,  // Gửi thông điệp client trả lời đúng
     INCORRECT, // Gửi thông điệp client trả lời sai
+    ACCOUNT_EXIST, // Gửi thông điệp tới client tài khoản đã tồn tại,
+    ACCOUNT_SUCCESS //Đăng ký thành công 
 
 }Command;
 

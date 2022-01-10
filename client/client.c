@@ -26,6 +26,7 @@ void *receive(void *args);
 void answerQuestion(int socket, char *answer);
 void interruptHandler(int sig_unused);
 void login(int sockff);
+void signup(int server_socket, char *info);
 void playGround(int sock);
 void createRoom();
 void joinRoom(int socket, char *roomId);
@@ -37,11 +38,13 @@ void joinRoomCreated(int sock);
 void getRoom(int socket);
 void inRoom(int socket, char *roomId);
 void sendBackRequest(int server_socket);
-void chat(int server_socket,char *mess);
+void chat(int server_socket, char *mess);
 
 // menu
 void homeMenu();
 void showMenuInRoom(char *roomId);
+void resetScreenAndShowHomeMenu();
+void resetScreenAndShowMenuInRoom(char *roomId);
 
 // void playGame(int server_socket);
 int main(int argc, const char **argv)
@@ -68,9 +71,7 @@ int main(int argc, const char **argv)
 
     if (connection_status == 0)
     {
-        login(network_socket);
-        setNonBlock(0);
-        setNonBlock(network_socket);
+        authMenu();
         startClient(network_socket);
     }
     return 0;
@@ -84,6 +85,8 @@ void startClient(int server_socket)
     char roomId[2];
     char type[20];
     char body[20];
+    setNonBlock(0);
+    setNonBlock(network_socket);
     while (1)
     {
         // Reset the fd set each time since select() modifies it
@@ -122,7 +125,13 @@ void startClient(int server_socket)
                                     login(server_socket);
                                 }
                                 break;
-
+                            case ACCOUNT_EXIST:
+                                printf("%s\n", messg->body);
+                                resetScreenAndShowHomeMenu();
+                                break;
+                            case ACCOUNT_SUCCESS:
+                                printf("%s\n", messg->body);
+                                break;
                             case CRTRM:
                                 strcpy(roomId, messg->body);
                                 printf("Bạn đã tạo phòng %s\n", messg->body);
@@ -205,6 +214,8 @@ void startClient(int server_socket)
                                 break;
                             case MESSG_NOT_FOUND:
                                 printf("%s\n", messg->body);
+                                resetScreenAndShowMenuInRoom(roomId);
+
                                 break;
                             case BACK:
                                 printf("%s\n", messg->body);
@@ -298,12 +309,50 @@ void startClient(int server_socket)
                                     chat(server_socket, body);
                                 }
                             }
+                            else if (strcmp(type, "signu") == 0)
+                            {
+                                if (body == NULL || strlen(body) < 1)
+                                {
+                                    printf("Bạn chưa nhập thông tin\n");
+                                    resetScreenAndShowHomeMenu();
+                                }
+                                else
+                                {
+                                    signup(server_socket, body);
+                                }
+                            }
+                            else if (strcmp(type, "login") == 0)
+                            {
+                                system("clear");
+                                login(server_socket);
+                            }
                         }
                     }
                 }
             }
         }
     }
+}
+void resetScreenAndShowMenuInRoom(char *roomId)
+{
+    sleep(2);
+    system("clear");
+    showMenuInRoom(roomId);
+}
+void resetScreenAndShowHomeMenu()
+{
+    sleep(2);
+    system("clear");
+    homeMenu();
+}
+void authMenu()
+{
+    printf("==================== %s =======================\n", "Chào mừng đến với Vua Tiếng Việt");
+    printf("Hãy chọn chức năng!\n\n");
+    printf("1. Đăng nhập: Nhập 'login'\n");
+    printf("2. Đăng ký : Nhập 'signu <usr> <pwd>'\n");
+    printf("0. Exit\n");
+    printf("============= Xin cảm ơn! =====================\n");
 }
 void homeMenu()
 {
@@ -344,12 +393,12 @@ void joinRoom(int server_socket, char *roomId)
     modify_message(JOINR, roomId, message);
     write(server_socket, message, strlen(message));
 }
-void chat(int server_socket,char *mess)
+void chat(int server_socket, char *mess)
 {
     char message[MESS_BUFFER];
-    bzero(message,MESS_BUFFER);
-    modify_message(CHAT,mess,message);
-    write(server_socket,message,strlen(message));
+    bzero(message, MESS_BUFFER);
+    modify_message(CHAT, mess, message);
+    write(server_socket, message, strlen(message));
 }
 void login(int sockfd)
 {
@@ -361,7 +410,7 @@ void login(int sockfd)
     bzero(username_password, 100);
     bzero(userid, 20);
     bzero(password, 20);
-
+    setBlock(0);
     printf("Enter user id:\n");
     fgets(userid, 20, stdin);
     printf("Enter pssword:\n");
@@ -394,6 +443,13 @@ void answerQuestion(int server_socket, char *answer)
     char message[MESS_BUFFER];
     bzero(message, MESS_BUFFER);
     modify_message(ANSWR, answer, message);
+    write(server_socket, message, strlen(message));
+}
+void signup(int server_socket, char *info)
+{
+    char message[MESS_BUFFER];
+    bzero(message, MESS_BUFFER);
+    modify_message(SIGNU, info, message);
     write(server_socket, message, strlen(message));
 }
 void setBlock(int fd)
