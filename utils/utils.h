@@ -12,8 +12,9 @@ typedef struct message
 }Message;
 
 #endif //STRUCT_MESSAGE 
-Message* split_message(char *mess);
 
+Message* split_message(char *mess);
 void modify_message(int cmd, char *body, char *message);
+
 void convert_number_to_string(int number,char *num_in_string);
 char *split_command(char *command,char *type,char *body);
