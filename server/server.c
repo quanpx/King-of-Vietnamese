@@ -62,6 +62,10 @@ void configServer(Server *server, int server_socket)
 	server->numClients = 0;
 	server->clientMutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
 	server->sockfd = server_socket;
+	for (int i = 0; i < MAX_BUFFER; i++)
+	{
+		server->clientSockets[i] = -1;
+	}
 	makeUsersNull(server->activeUsers);
 	// makeRoomsNull(server.rooms);
 
@@ -280,7 +284,7 @@ void *clientHandler(void *data)
 		{
 		case LOGIN:
 			bzero(result, 256);
-			user = handleLogin(mess->body, clientSockfd, result);
+			user = handleLogin(users,mess->body, clientSockfd, result);
 			pthread_mutex_lock(server->clientMutex);
 			addUser(server->activeUsers, user);
 			pthread_mutex_unlock(server->clientMutex);
@@ -291,6 +295,23 @@ void *clientHandler(void *data)
 			fprintf(stderr, "Client on socket %d has disconnected.\n", clientSockfd);
 			removeClient(server, clientSockfd);
 			break;
+		case SIGNU:
+			if (validateUniqueUsername(users, mess->body))
+			{
+				bzero(message, MESS_BUFFER);
+				modify_message(ACCOUNT_EXIST, "Tài khoản đã tồn tại! Thử tên khác!", message);
+				write(clientSockfd, message, strlen(message));
+			}
+			else
+			{
+				handleSignUp(users, mess->body);
+				bzero(message, MESS_BUFFER);
+				modify_message(ACCOUNT_SUCCESS, "Đăng ký thành công! Dùng 'login' để đăng nhập!", message);
+				write(clientSockfd, message, strlen(message));
+			}
+
+			break;
+
 		case CRTRM:
 			room = createRoom();
 			pthread_mutex_lock(game->mutex);
@@ -597,7 +618,8 @@ void removeClient(Server *server, int clientSocketFd)
 	pthread_mutex_lock(server->clientMutex);
 	for (int i = 0; i < MAX_BUFFER; i++)
 	{
-		if (server->clientSockets[i] == clientSocketFd)
+
+		if (server->clientSockets[i] >= 0 && server->clientSockets[i] == clientSocketFd)
 		{
 			server->clientSockets[i] = 0;
 			close(clientSocketFd);

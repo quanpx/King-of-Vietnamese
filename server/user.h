@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "../utils/utils.h"
 #define MAX_USER 10
 #ifndef STRUCT_USER
 #define STRUCT_USER
@@ -22,8 +23,10 @@ User *initUser(char *username, char *password, int status);
 void addUser(User *users[MAX_USER],User *user);
 User* searchUser(User *users[MAX_USER],char *username);
 void readUsersFromFile(User *users[MAX_USER],char *filename);
-void writeUsersToFile(User *user[MAX_USER],char *filename);
+void writeUsersToFile(User *user[MAX_USER]);
 void printUser(User *user);
 void makeUsersNull(User *users[MAX_USER]);
 void printAllUsers(User *users[MAX_USER]);
 User *searchUserBySocket(User *users[MAX_USER], int socket);
+void handleSignUp(User *users[MAX_USER],char *info);
+int validateUniqueUsername(User *user[MAX_USER],char *info);

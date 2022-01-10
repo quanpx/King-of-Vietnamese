@@ -1,8 +1,7 @@
 #include "authentication.h"
 #include <pthread.h>
 #include "../utils/utils.h"
-extern User *users[MAX_USER];
-int authenticate(char *username, char *password)
+int authenticate(User *users[MAX_USER],char *username, char *password)
 {
 	User *user = searchUser(users, username);
 
@@ -17,7 +16,7 @@ int authenticate(char *username, char *password)
 	}
 	return 0;
 }
-User* handleLogin(char *body, int socket,char *result)
+User* handleLogin(User *users[MAX_USER],char *body, int socket,char *result)
 {
 	char username[20];
 	char password[20];
@@ -42,7 +41,7 @@ User* handleLogin(char *body, int socket,char *result)
 		char *token=strtok(NULL,"-");
 		strcpy(password,token);
 		// xác thực thông tin user có hợp lệ
-		int check = authenticate(username, password);
+		int check = authenticate(users,username, password);
 		if (check)
 		{
 

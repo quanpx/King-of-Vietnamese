@@ -1,3 +1,3 @@
 #include "user.h"
-int authenticate(char *username, char *password);
-User* handleLogin(char *client_message, int socket,char *result);
+int authenticate(User *users[MAX_USER],char *username, char *password);
+User* handleLogin(User *users[MAX_USER],char *client_message, int socket,char *result);
