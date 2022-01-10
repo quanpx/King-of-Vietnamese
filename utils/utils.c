@@ -13,6 +13,7 @@ Message *split_message(char *mess)
 }
 void modify_message(int cmd, char *body, char *message)
 {
+    bzero(message,256);
     char cmdType[5];
     char length[5];
     sprintf(length, "%ld", strlen(body));

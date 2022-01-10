@@ -37,6 +37,7 @@ void joinRoomCreated(int sock);
 void getRoom(int socket);
 void inRoom(int socket, char *roomId);
 void sendBackRequest(int server_socket);
+void chat(int server_socket,char *mess);
 
 // menu
 void homeMenu();
@@ -56,7 +57,7 @@ int main(int argc, const char **argv)
     struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(5000);
-    server_address.sin_addr.s_addr = inet_addr("192.168.56.102");
+    server_address.sin_addr.s_addr = htonl(INADDR_ANY);
 
     int connection_status = connect(network_socket, (struct sockaddr *)&server_address, sizeof(server_address));
     // check for connection_status
@@ -195,7 +196,9 @@ void startClient(int server_socket)
                                 break;
                             case WAIT:
                                 printf("%s\n", messg->body);
-                                printf("Nhập 'start' để bắt đầu!\n");
+                                sleep(2);
+                                system("clear");
+                                showMenuInRoom(roomId);
                                 break;
                             case READY:
                                 printf("%s\n", messg->body);
@@ -210,6 +213,21 @@ void startClient(int server_socket)
                                 system("clear");
                                 homeMenu();
                                 break;
+                            case CORRECT:
+                                printf("%s\n", messg->body);
+                                sleep(2);
+                                system("clear");
+                                break;
+                            case CHAT:
+                                printf("%s\n", messg->body);
+                                break;
+                            case INCORRECT:
+                                printf("%s\n", messg->body);
+                                sleep(2);
+                                system("clear");
+                                printf("Đợi đối phương trả lời!\n");
+                                break;
+
                             default:
                                 break;
                             }
@@ -254,6 +272,8 @@ void startClient(int server_socket)
                             }
                             else if (strcmp(command, "start") == 0)
                             {
+                                system("clear");
+                                showMenuInRoom(roomId);
                                 startGame(server_socket, roomId);
                             }
                             else if (strcmp(type, "answr") == 0)
@@ -263,6 +283,20 @@ void startClient(int server_socket)
                             else if (strcmp(type, "back") == 0)
                             {
                                 sendBackRequest(server_socket);
+                            }
+                            else if (strcmp(type, "chat") == 0)
+                            {
+                                if (body == NULL || strlen(body) < 1)
+                                {
+                                    printf("Nhập nội dung\n");
+                                    sleep(1);
+                                    system("clear");
+                                    showMenuInRoom(roomId);
+                                }
+                                else
+                                {
+                                    chat(server_socket, body);
+                                }
                             }
                         }
                     }
@@ -309,6 +343,13 @@ void joinRoom(int server_socket, char *roomId)
     bzero(message, MESS_BUFFER);
     modify_message(JOINR, roomId, message);
     write(server_socket, message, strlen(message));
+}
+void chat(int server_socket,char *mess)
+{
+    char message[MESS_BUFFER];
+    bzero(message,MESS_BUFFER);
+    modify_message(CHAT,mess,message);
+    write(server_socket,message,strlen(message));
 }
 void login(int sockfd)
 {

@@ -22,7 +22,10 @@ typedef enum commnand
     RESULT, //gửi kết quả đến client 
     MESSG_NOT_FOUND, // gửi kết quả không tìm thấy đến client 
     BACK_OK, // quay trở lại thành công đến client 
-    OPONENT_JOIN // guiwt thông báo đến client là người chơi đã tham gia phòn
+    OPONENT_JOIN, // guiwt thông báo đến client là người chơi đã tham gia phòng,
+    CORRECT,
+    INCORRECT,
+    CHAT
 
 }Command;
 
