@@ -425,9 +425,9 @@ void *clientHandler(void *data)
 				bzero(result, MESS_BUFFER);
 				bzero(socketStr, 2);
 				sprintf(socketStr, "%d", clientSockfd);
-				strcat(result, "Client ");
+				strcat(result, "Người chơi ");
 				strcat(result, socketStr);
-				strcat(result, " answered correctly!");
+				strcat(result, " trả lời đúng!");
 				bzero(message, MESS_BUFFER);
 				modify_message(ANSWR, result, message);
 				for (int i = 0; i < server->numClients; i++)
@@ -440,7 +440,7 @@ void *clientHandler(void *data)
 				}
 				bzero(message, MESS_BUFFER);
 				bzero(result, 256);
-				modify_message(ANSWR, "Correct!", message);
+				modify_message(ANSWR, "Chính xác!", message);
 				player = getPlayerBySocket(room->players, clientSockfd);
 				pthread_mutex_lock(game->mutex);
 				updatePoint(player);
@@ -457,7 +457,7 @@ void *clientHandler(void *data)
 			else
 			{
 				bzero(message, MESS_BUFFER);
-				modify_message(ANSWR, "Inorrect!", message);
+				modify_message(ANSWR, "Không chính xác!", message);
 				write(clientSockfd, message, strlen(message));
 			}
 			break;
