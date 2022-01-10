@@ -4,7 +4,7 @@ User *users[MAX_USER];
 Room *rooms[MAX_ROOM];
 Question *questions[MAX_QUESTION];
 int numQuestion = 0;
-
+int num_rooms;
 void bindSocket(struct sockaddr_in *server_addr, int socketFd);
 void removeClient(Server *server, int clientSocketFd);
 void *clientHandler(void *data);
@@ -420,13 +420,15 @@ void *clientHandler(void *data)
 			pthread_mutex_unlock(game->mutex);
 			printQuestion(question);
 			printf("%s\n", mess->body);
+			room = game->room;
+			player = getPlayerBySocket(room->players, clientSockfd);
 			if (strcmp(question->answer, mess->body) == 0)
 			{
 				bzero(result, MESS_BUFFER);
 				bzero(socketStr, 2);
 				sprintf(socketStr, "%d", clientSockfd);
 				strcat(result, "Người chơi ");
-				strcat(result, socketStr);
+				strcat(result, player->username);
 				strcat(result, " trả lời đúng!");
 				bzero(message, MESS_BUFFER);
 				modify_message(ANSWR, result, message);
@@ -440,7 +442,7 @@ void *clientHandler(void *data)
 				}
 				bzero(message, MESS_BUFFER);
 				bzero(result, 256);
-				modify_message(ANSWR, "Chính xác!", message);
+				modify_message(CORRECT, "Chính xác!", message);
 				player = getPlayerBySocket(room->players, clientSockfd);
 				pthread_mutex_lock(game->mutex);
 				updatePoint(player);
@@ -457,9 +459,51 @@ void *clientHandler(void *data)
 			else
 			{
 				bzero(message, MESS_BUFFER);
-				modify_message(ANSWR, "Không chính xác!", message);
+				modify_message(INCORRECT, "Không chính xác!", message);
 				write(clientSockfd, message, strlen(message));
 			}
+			break;
+		case CHAT:
+
+			room = game->room;
+			if (room != NULL)
+			{
+				if (room->no_player < 2)
+				{
+					modify_message(WAIT, "Đợi người chơi tham gia phòng!", message);
+					write(clientSockfd, message, strlen(message));
+				}
+				else
+				{
+					player = getPlayerBySocket(room->players, clientSockfd);
+					if (player != NULL)
+					{
+						bzero(message, MESS_BUFFER);
+						bzero(result, MESS_BUFFER);
+
+						strcat(result, player->username);
+						strcat(result, ": ");
+						strcat(result, mess->body);
+						modify_message(READY, result, message);
+						for (int i = 0; i < room->no_player; i++)
+						{
+							int socket = room->players[i]->socket;
+							if (socket != 0)
+							{
+								if (socket != clientSockfd && write(socket, message, MESS_BUFFER - 1) == -1)
+									perror("Socket write failed: ");
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				bzero(message, MESS_BUFFER);
+				modify_message(MESSG_NOT_FOUND, "Bạn không ở trong phòng!", message);
+				write(clientSockfd, message, strlen(message));
+			}
+
 			break;
 		case BACK:
 
@@ -468,13 +512,16 @@ void *clientHandler(void *data)
 			write(clientSockfd, message, MESS_BUFFER - 1);
 			for (int i = 0; i < room->no_player; i++)
 			{
-				if (room->players[i]->socket == clientSockfd)
+				if (room->players[i] != NULL)
 				{
-					pthread_mutex_lock(game->mutex);
-					room->players[i] = NULL;
-					room->no_player--;
-					pthread_mutex_unlock(game->mutex);
-					break;
+					if (room->players[i]->socket == clientSockfd)
+					{
+						pthread_mutex_lock(game->mutex);
+						room->players[i] = NULL;
+						room->no_player--;
+						pthread_mutex_unlock(game->mutex);
+						break;
+					}
 				}
 			}
 			bzero(message, MESS_BUFFER);

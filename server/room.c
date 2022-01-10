@@ -1,22 +1,15 @@
 #include "room.h"
 #include "../utils/utils.h"
+extern int num_rooms;
 Room *createRoom()
 {
-    FILE *fo = fopen("../file/room.txt", "r");
-    if (fo == NULL)
-    {
-        printf("Open file failed!");
-        exit(0);
-    }
-    int num_room;
-    fscanf(fo, "%d", &num_room);
-    fclose(fo);
     Room *room = (Room *)malloc(sizeof(Room));
     if (room == NULL)
     {
         printf("Allocate memory failed!");
     }
-    room->roomid = num_room + 1;
+    room->roomid = num_rooms + 1;
+    num_rooms+=1;
     for (int i = 0; i < MAX_PLAYER; i++)
     {
         room->players[i] = NULL;
@@ -135,8 +128,7 @@ void readRoomsFromFile(Room *rooms[MAX_ROOM])
         printf("Open file failed!");
         exit(0);
     }
-    int num_room;
-    fscanf(fo, "%d", &num_room);
+    fscanf(fo, "%d", &num_rooms);
     int roomId, roomState, numPlayers;
     while (fscanf(fo, "%d %d %d", &roomId, &roomState, &numPlayers) != EOF)
     {
