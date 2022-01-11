@@ -45,6 +45,7 @@ void homeMenu();
 void showMenuInRoom(char *roomId);
 void resetScreenAndShowHomeMenu();
 void resetScreenAndShowMenuInRoom(char *roomId);
+void exitGame(int server_socket);
 
 // void playGame(int server_socket);
 int main(int argc, const char **argv)
@@ -127,10 +128,11 @@ void startClient(int server_socket)
                                 break;
                             case ACCOUNT_EXIST:
                                 printf("%s\n", messg->body);
-                                resetScreenAndShowHomeMenu();
+                                resetScreenAndShowAuthMenu();
                                 break;
                             case ACCOUNT_SUCCESS:
                                 printf("%s\n", messg->body);
+                                resetScreenAndShowAuthMenu();
                                 break;
                             case CRTRM:
                                 strcpy(roomId, messg->body);
@@ -214,8 +216,12 @@ void startClient(int server_socket)
                                 break;
                             case MESSG_NOT_FOUND:
                                 printf("%s\n", messg->body);
-                                resetScreenAndShowMenuInRoom(roomId);
+                                resetScreenAndShowHomeMenu();
 
+                                break;
+                            case NOT_IN_ROOM:
+                                printf("%s\n", messg->body);
+                                resetScreenAndShowHomeMenu();
                                 break;
                             case BACK:
                                 printf("%s\n", messg->body);
@@ -237,6 +243,10 @@ void startClient(int server_socket)
                                 sleep(2);
                                 system("clear");
                                 printf("Đợi đối phương trả lời!\n");
+                                break;
+                            case EXIT_SUCC:
+                                printf("%s\n", messg->body);
+                                resetScreenAndShowAuthMenu();
                                 break;
 
                             default:
@@ -326,12 +336,26 @@ void startClient(int server_socket)
                                 system("clear");
                                 login(server_socket);
                             }
+                            else if (strcmp(type, "exit") == 0)
+                            {
+                                exitGame(server_socket);
+                            }
+                            else
+                            {
+                                printf("Câu lệnh không hợp lê\n");
+                            }
                         }
                     }
                 }
             }
         }
     }
+}
+void resetScreenAndShowAuthMenu()
+{
+    sleep(2);
+    system("clear");
+    authMenu();
 }
 void resetScreenAndShowMenuInRoom(char *roomId)
 {
@@ -371,6 +395,13 @@ void showMenuInRoom(char *roomId)
     printf("2. Quay trở lại : Nhập 'back'\n");
     printf("0. Exit\n");
     printf("============= Xin cảm ơn! =====================\n");
+}
+void exitGame(int sockfd)
+{
+    char message[MESS_BUFFER];
+    bzero(message, MESS_BUFFER);
+    modify_message(EXIT, "exit", message);
+    write(sockfd, message, strlen(message));
 }
 void getRoom(int sockfd)
 {

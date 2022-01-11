@@ -284,7 +284,7 @@ void *clientHandler(void *data)
 		{
 		case LOGIN:
 			bzero(result, 256);
-			user = handleLogin(users,mess->body, clientSockfd, result);
+			user = handleLogin(users, mess->body, clientSockfd, result);
 			pthread_mutex_lock(server->clientMutex);
 			addUser(server->activeUsers, user);
 			pthread_mutex_unlock(server->clientMutex);
@@ -521,7 +521,7 @@ void *clientHandler(void *data)
 			else
 			{
 				bzero(message, MESS_BUFFER);
-				modify_message(MESSG_NOT_FOUND, "Bạn không ở trong phòng!", message);
+				modify_message, (NOT_IN_ROOM, "Bạn không ở trong phòng!", message);
 				write(clientSockfd, message, strlen(message));
 			}
 
@@ -540,6 +540,7 @@ void *clientHandler(void *data)
 						pthread_mutex_lock(game->mutex);
 						room->players[i] = NULL;
 						room->no_player--;
+						room->flag = 0;
 						pthread_mutex_unlock(game->mutex);
 						break;
 					}
@@ -560,6 +561,12 @@ void *clientHandler(void *data)
 				}
 			}
 			break;
+		case EXIT:
+			bzero(message, MESS_BUFFER);
+			modify_message(EXIT_SUCC, "Thoát thành công!", message);
+			write(clientSockfd, message, strlen(message));
+			break;
+
 		default:
 			break;
 		}

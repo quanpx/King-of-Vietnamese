@@ -24,7 +24,10 @@ typedef enum commnand
     CORRECT,  // Gửi thông điệp client trả lời đúng
     INCORRECT, // Gửi thông điệp client trả lời sai
     ACCOUNT_EXIST, // Gửi thông điệp tới client tài khoản đã tồn tại,
-    ACCOUNT_SUCCESS //Đăng ký thành công 
+    ACCOUNT_SUCCESS, //Đăng ký thành công
+    NOT_IN_ROOM, //Không ở trong phòng,
+    EXIT, // Thoát
+    EXIT_SUCC // Thông điệp thoát thành công 
 
 }Command;
 
