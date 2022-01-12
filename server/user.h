@@ -28,5 +28,6 @@ void printUser(User *user);
 void makeUsersNull(User *users[MAX_USER]);
 void printAllUsers(User *users[MAX_USER]);
 User *searchUserBySocket(User *users[MAX_USER], int socket);
+User *searchUserByUsername(User *users[MAX_USER],char *info);
 void handleSignUp(User *users[MAX_USER],char *info);
 int validateUniqueUsername(User *user[MAX_USER],char *info);

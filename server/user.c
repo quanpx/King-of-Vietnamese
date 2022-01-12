@@ -11,6 +11,7 @@ User *initUser(char *username, char *password, int status)
 	strcpy(newUser->username, username);
 	strcpy(newUser->password, password);
 	newUser->status = status;
+	newUser->socket = -1;
 	return newUser;
 }
 void addUser(User *users[MAX_USER], User *user)
@@ -115,7 +116,7 @@ User *searchUserBySocket(User *users[MAX_USER], int socket)
 {
 	for (int i = 0; i < MAX_USER; i++)
 	{
-		if (users[i] != NULL)
+		if (users[i] != NULL && users[i]->socket > 0)
 		{
 			if (users[i]->socket == socket)
 			{
@@ -123,6 +124,7 @@ User *searchUserBySocket(User *users[MAX_USER], int socket)
 			}
 		}
 	}
+	return NULL;
 }
 void handleSignUp(User *users[MAX_USER], char *info)
 {
@@ -130,19 +132,45 @@ void handleSignUp(User *users[MAX_USER], char *info)
 	char password[20];
 	bzero(username, 20);
 	bzero(password, 20);
-	split_command(info,username,password);
-	printf("%s %s\n",username,password);
+	split_command(info, username, password);
+	printf("%s %s\n", username, password);
 	User *user = initUser(username, password, 0);
 	addUser(users, user);
 	writeUsersToFile(users);
+}
+User *searchUserByUsername(User *users[MAX_USER], char *info)
+{
+	char username[20];
+	bzero(username, 20);
+	char temp_info[50];
+	bzero(temp_info, 50);
+	strcpy(temp_info, info);
+	char *token = strtok(temp_info, "-");
+	if (token != NULL)
+	{
+		strcpy(username, token);
+	}
+	for (int i = 0; i < MAX_USER; i++)
+	{
+		if (users[i] != NULL)
+		{
+			if (strcmp(users[i]->username, username) == 0)
+			{
+				printUser(users[i]);
+				return users[i];
+			}
+		}
+	}
+
+	return NULL;
 }
 int validateUniqueUsername(User *users[MAX_USER], char *info)
 {
 	char username[20];
 	bzero(username, 20);
 	char temp_info[50];
-	bzero(temp_info,50);
-	strcpy(temp_info,info);
+	bzero(temp_info, 50);
+	strcpy(temp_info, info);
 	char *token = strtok(temp_info, " ");
 	if (token != NULL)
 	{
@@ -174,4 +202,9 @@ int validateUniqueUsername(User *users[MAX_USER], char *info)
 // 	// char username[20] = "quanify";
 // 	// int check = validateUniqueUsername(users,username);
 // 	// printf("%d\n", check);
+// 	User *user = searchUserByUsername(users, "quan");
+// 	if (user != NULL)
+// 	{
+// 		printUser(user);
+// 	}
 // }

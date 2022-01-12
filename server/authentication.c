@@ -47,12 +47,8 @@ User* handleLogin(User *users[MAX_USER],char *body, int socket,char *result)
 
 			strcpy(result, "succ");
 			user->socket = socket;
+			user->status=1;
 			printf("%s at socket %d joined! \n", user->username, user->socket);
-			// Nếu thông tin hợp lệ, tạo ra 1 player với tên giống user ;
-			// player = initPlayer(username, socket);
-			// addPlayer(&(server->activePlayer), player);
-			// addPlayerToRoom(room, player);
-			// Tăng số người chơi lên 1
 		}
 		// còn không thông báo đăng nhập thất bại
 		else
@@ -63,3 +59,8 @@ User* handleLogin(User *users[MAX_USER],char *body, int socket,char *result)
 	}
 	return user;
 }
+int isLogined(User *user)
+{
+	return user->status==1?1:0;
+}
+

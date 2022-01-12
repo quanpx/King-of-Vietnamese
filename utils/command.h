@@ -4,7 +4,10 @@
 typedef enum commnand
 {
     LOGIN,  // Đăng nhập
-    LOGOT,  // Đăng xuất
+    NOT_LOGIN, //Yêu cầu đăng nhập
+    LOGIN_FAIL, // Đăng nhập thất bại
+    LOGOT,  // Đăng xuất,
+    LOGOT_SUCC,//Đăng xuất thành công
     SIGNU,  // Đăng ký
     CRTRM,  // Tạo phòng
     GETRM,  // Lấy danh sách phòng
@@ -19,7 +22,8 @@ typedef enum commnand
     READY,  // gửi thông tin đến client là người chơi sắn sàng 
     RESULT, //gửi kết quả đến client 
     MESSG_NOT_FOUND, // gửi kết quả không tìm thấy đến client 
-    BACK_OK, // quay trở lại thành công đến client 
+    BACK_OK, // quay trở lại thành công đến client,
+    BACK_TO_HOME, // quay trở vể trang chủ 
     OPONENT_JOIN, // gửi thông báo đến client là người chơi đã tham gia phòng,
     CORRECT,  // Gửi thông điệp client trả lời đúng
     INCORRECT, // Gửi thông điệp client trả lời sai
@@ -27,7 +31,8 @@ typedef enum commnand
     ACCOUNT_SUCCESS, //Đăng ký thành công
     NOT_IN_ROOM, //Không ở trong phòng,
     EXIT, // Thoát
-    EXIT_SUCC // Thông điệp thoát thành công 
+    EXIT_SUCC, // Thông điệp thoát thành công
+    EXIT_NOT_LOGIN // Người dùng thoát khi chưa login 
 
 }Command;
 

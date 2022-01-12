@@ -46,6 +46,7 @@ void showMenuInRoom(char *roomId);
 void resetScreenAndShowHomeMenu();
 void resetScreenAndShowMenuInRoom(char *roomId);
 void exitGame(int server_socket);
+void logout(int server_socket);
 
 // void playGame(int server_socket);
 int main(int argc, const char **argv)
@@ -126,6 +127,19 @@ void startClient(int server_socket)
                                     login(server_socket);
                                 }
                                 break;
+                            case NOT_LOGIN:
+                                printf("%s\n", messg->body);
+                                resetScreenAndShowAuthMenu();
+                                break;
+                            case LOGIN_FAIL:
+                                printf("%s\n",messg->body);
+                                resetScreenAndShowAuthMenu();
+                                break;
+                            case LOGOT_SUCC:
+                                printf("%s\n", messg->body);
+                                resetScreenAndShowAuthMenu();
+                                break;
+
                             case ACCOUNT_EXIST:
                                 printf("%s\n", messg->body);
                                 resetScreenAndShowAuthMenu();
@@ -230,6 +244,10 @@ void startClient(int server_socket)
                                 system("clear");
                                 homeMenu();
                                 break;
+                            case BACK_TO_HOME:
+                                system("clear");
+                                homeMenu();
+                                break;
                             case CORRECT:
                                 printf("%s\n", messg->body);
                                 sleep(2);
@@ -246,7 +264,11 @@ void startClient(int server_socket)
                                 break;
                             case EXIT_SUCC:
                                 printf("%s\n", messg->body);
-                                resetScreenAndShowAuthMenu();
+                                return 0;
+
+                            case EXIT_NOT_LOGIN:
+                                printf("Thoát thành công !");
+                                exit(0);
                                 break;
 
                             default:
@@ -336,6 +358,10 @@ void startClient(int server_socket)
                                 system("clear");
                                 login(server_socket);
                             }
+                            else if (strcmp(type, "logout") == 0)
+                            {
+                                logout(server_socket);
+                            }
                             else if (strcmp(type, "exit") == 0)
                             {
                                 exitGame(server_socket);
@@ -371,30 +397,30 @@ void resetScreenAndShowHomeMenu()
 }
 void authMenu()
 {
-    printf("==================== %s =======================\n", "Chào mừng đến với Vua Tiếng Việt");
-    printf("Hãy chọn chức năng!\n\n");
+    printf("====== %s ======\n\n", "Chào mừng đến với Vua Tiếng Việt");
+    printf("Hãy chọn chức năng!\n");
     printf("1. Đăng nhập: Nhập 'login'\n");
     printf("2. Đăng ký : Nhập 'signu <usr> <pwd>'\n");
-    printf("0. Exit\n");
-    printf("============= Xin cảm ơn! =====================\n");
+    printf("0. Exit : 'Ctrl + C' hoặc nhập 'exit'\n\n");
+    printf("================ Xin cảm ơn! ==================\n");
 }
 void homeMenu()
 {
-    printf("==================== %s =======================\n", "Chào mừng đến với Vua Tiếng Việt");
-    printf("Hãy chọn chức năng!\n\n");
+    printf("====== %s ======\n\n", "Chào mừng đến với Vua Tiếng Việt");
+    printf("Hãy chọn chức năng!\n");
     printf("1. Tạo phòng : Nhập 'crtrm'\n");
     printf("2. Xem danh sách phòng 'listr'\n");
-    printf("0. Exit\n");
-    printf("============= Xin cảm ơn! =====================\n");
+    printf("0. Exit : 'Ctrl + C' hoặc nhập 'exit'\n\n");
+    printf("================ Xin cảm ơn! ==================\n");
 }
 void showMenuInRoom(char *roomId)
 {
-    printf("============ Chào mừng đến phòng %s ===========\n", roomId);
-    printf("Hãy chọn chức năng!\n\n");
+    printf("=========== Chào mừng đến phòng %s ==========\n\n", roomId);
+    printf("Hãy chọn chức năng!\n");
     printf("1. Bắt đầu trò chơi : Nhập 'start'\n");
     printf("2. Quay trở lại : Nhập 'back'\n");
-    printf("0. Exit\n");
-    printf("============= Xin cảm ơn! =====================\n");
+    printf("0. Exit : 'Ctrl + C' hoặc nhập 'exit'\n\n");
+    printf("================ Xin cảm ơn! ==================\n");
 }
 void exitGame(int sockfd)
 {
@@ -500,14 +526,20 @@ void setNonBlock(int fd)
     flags |= O_NONBLOCK;
     fcntl(fd, F_SETFL, flags);
 }
+void logout(int server_socket)
+{
+
+    char message[MESS_BUFFER];
+    bzero(message, MESS_BUFFER);
+    modify_message(LOGOT, "logout", message);
+    if (write(network_socket, message, strlen(message)) == -1)
+        perror("write failed: ");
+}
 void interruptHandler(int sig_unused)
 {
     char message[MESS_BUFFER];
     bzero(message, MESS_BUFFER);
-    modify_message(LOGOT, "exit", message);
+    modify_message(EXIT, "exit", message);
     if (write(network_socket, message, strlen(message)) == -1)
         perror("write failed: ");
-    printf("Signed out!\n");
-    close(network_socket);
-    exit(1);
 }
