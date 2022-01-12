@@ -527,36 +527,45 @@ void *clientHandler(void *data)
 
 			break;
 		case BACK:
-
-			bzero(message, MESS_BUFFER);
-			modify_message(BACK_OK, "BACK_OK", message);
-			write(clientSockfd, message, MESS_BUFFER - 1);
-			for (int i = 0; i < room->no_player; i++)
+			room = game->room;
+			if (room == NULL)
 			{
-				if (room->players[i] != NULL)
+				bzero(message, MESS_BUFFER);
+				modify_message(BACK_TO_HOME, "BACK TO HOME", message);
+				write(clientSockfd, message, MESS_BUFFER - 1);
+			}
+			else
+			{
+				bzero(message, MESS_BUFFER);
+				modify_message(BACK_OK, "BACK_OK", message);
+				write(clientSockfd, message, MESS_BUFFER - 1);
+				for (int i = 0; i < room->no_player; i++)
 				{
-					if (room->players[i]->socket == clientSockfd)
+					if (room->players[i] != NULL)
 					{
-						pthread_mutex_lock(game->mutex);
-						room->players[i] = NULL;
-						room->no_player--;
-						room->flag = 0;
-						pthread_mutex_unlock(game->mutex);
-						break;
+						if (room->players[i]->socket == clientSockfd)
+						{
+							pthread_mutex_lock(game->mutex);
+							room->players[i] = NULL;
+							room->no_player--;
+							room->flag = 0;
+							pthread_mutex_unlock(game->mutex);
+							break;
+						}
 					}
 				}
-			}
-			bzero(message, MESS_BUFFER);
-			modify_message(BACK, "Người chơi đã thoát!", message);
-			for (int i = 0; i < room->no_player; i++)
-			{
-				if (room->players[i] != NULL)
+				bzero(message, MESS_BUFFER);
+				modify_message(BACK, "Người chơi đã thoát!", message);
+				for (int i = 0; i < room->no_player; i++)
 				{
-					int socket = room->players[i]->socket;
-					if (socket != 0)
+					if (room->players[i] != NULL)
 					{
-						if (write(socket, message, MESS_BUFFER - 1) == -1)
-							perror("Socket write failed: ");
+						int socket = room->players[i]->socket;
+						if (socket != 0)
+						{
+							if (write(socket, message, MESS_BUFFER - 1) == -1)
+								perror("Socket write failed: ");
+						}
 					}
 				}
 			}
