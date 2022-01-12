@@ -81,6 +81,21 @@ void addPlayerToRoom(Room *room, Player *player)
     }
     return;
 }
+void removePlayerFromRoom(Room *room,int sockfd)
+{
+    for(int i=0;i<room->no_player;i++)
+    {
+        if(room->players[i]!=NULL)
+        {
+            if(room->players[i]->socket==sockfd)
+            {
+                room->players[i]=NULL;
+                room->no_player--;
+                break;
+            }
+        }
+    }
+}
 void makeRoomsNull(Room *rooms[MAX_ROOM])
 {
     for (int i = 0; i < MAX_ROOM; i++)

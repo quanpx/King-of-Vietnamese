@@ -47,7 +47,7 @@ User* handleLogin(User *users[MAX_USER],char *body, int socket,char *result)
 
 			strcpy(result, "succ");
 			user->socket = socket;
-			user->status=1;
+			user->status=LOGINED;
 			printf("%s at socket %d joined! \n", user->username, user->socket);
 		}
 		// còn không thông báo đăng nhập thất bại
@@ -61,6 +61,6 @@ User* handleLogin(User *users[MAX_USER],char *body, int socket,char *result)
 }
 int isLogined(User *user)
 {
-	return user->status==1?1:0;
+	return user->status!=UN_LOGIN?1:0;
 }
 

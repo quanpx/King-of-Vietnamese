@@ -42,3 +42,4 @@ void printAllRooms(Room *rooms[MAX_ROOM]);
 void rooms_to_string(Room *rooms[MAX_ROOM], char *message);
 void readRoomsFromFile(Room *rooms[MAX_ROOM]);
 void writeRoomsToFile(Room *rooms[MAX_ROOM]);
+void removePlayerFromRoom(Room *room,int socketfd);
