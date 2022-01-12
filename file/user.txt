@@ -1,4 +1,3 @@
-quanify|crquan07|1
-crquan07|crquan07|1
-quan|123|0
+quanify|crquan07|0
 khanh|123|0
+viet|123|0

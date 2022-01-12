@@ -196,7 +196,8 @@ void startClient(int server_socket)
 
                                 else
                                 {
-                                    printf("%s\n", message);
+                                    printf("%s\n", messg->body);
+                                    resetScreenAndShowMenuInRoom(roomId);
                                 }
                                 break;
                             case QUEST:
@@ -264,10 +265,12 @@ void startClient(int server_socket)
                                 break;
                             case EXIT_SUCC:
                                 printf("%s\n", messg->body);
+                                close(server_socket);
                                 return 0;
 
                             case EXIT_NOT_LOGIN:
                                 printf("Thoát thành công !");
+                                close(server_socket);
                                 exit(0);
                                 break;
 
