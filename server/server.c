@@ -580,6 +580,7 @@ void *clientHandler(void *data)
 						game->isPlay = 1;
 						pthread_cond_signal(game->cond_players);
 						pthread_mutex_unlock(game->mutex);
+						game->room=room;
 					}
 				}
 
