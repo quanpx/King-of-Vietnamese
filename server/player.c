@@ -47,9 +47,9 @@ void printPlayer(Player *player)
 
 	printf("%s has %d points\n", player->username, getTotalPoint(player));
 }
-void updatePoint(Player *player)
+void updatePoint(Player *player,int point)
 {
-	player->point+=1;
+	player->point+=point;
 }
 
 Player *getPlayerBySocket(Player *players[MAX_PLAYER],int socket)

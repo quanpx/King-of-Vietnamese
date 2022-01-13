@@ -92,6 +92,7 @@ void startServer(int server_socket)
 	{
 		fprintf(stderr, "Game handler started\n");
 	}
+	
 	pthread_join(connection_handler_thread, NULL);
 	pthread_join(game_handler_thread, NULL);
 
@@ -244,13 +245,12 @@ void *gameHandler(void *data)
 		{
 			pthread_mutex_unlock(game->mutex);
 			fprintf(stderr, "Gửi câu hỏi: %s\n", quest->quest);
-			modify_message(QUEST, quest->quest, message);
+			// modify_message(QUEST, quest->quest, message);
 
 			for (int i = 0; i < server->numClients; i++)
 			{
 				int socket = clientSockets[i];
-				if (socket != 0 && write(socket, message, MESS_BUFFER - 1) == -1)
-					perror("Socket write failed: ");
+				sendQuestion(quest,socket);
 			}
 
 			// Tạm block luồng nếu câu hỏi chưa được trả lời
@@ -298,6 +298,9 @@ void *clientHandler(void *data)
 		else
 		{
 			// read(clientSockfd, message, MESS_BUFFER - 1);
+			/*
+			0|10|quan-123
+			*/
 			printf("%s\n", message);
 			Message *mess = split_message(message);
 
@@ -355,6 +358,7 @@ void *clientHandler(void *data)
 			Xử  lý yêu cầu đăng ký
 			Kiếm tra thông tin xem tài khoàn đã được đăng ký chưa
 			Nếu chưa sẽ tiến hành xử lý đăng ký
+			5|10|quan 123
 			*/
 			case SIGNU:
 				if (validateUniqueUsername(users, mess->body))
@@ -404,12 +408,16 @@ void *clientHandler(void *data)
 					sau đó thêm người chơi đó vào phòng
 					*/
 					user->status = IN_ROOM;
+
 					player = initPlayer(user->username, user->socket);
 					addPlayerToRoom(room, player);
+
 					bzero(message, MESS_BUFFER);
 					convert_number_to_string(room->roomid, num_in_string);
+
 					modify_message(CRTRM, num_in_string, message);
 					write(clientSockfd, message, strlen(message));
+
 					fprintf(stdout, "Client %d request create a room.\n", clientSockfd);
 				}
 				break;
@@ -462,36 +470,49 @@ void *clientHandler(void *data)
 						}
 						else
 						{
-							// Mỗi game sẽ thuộc một phòng
-							pthread_mutex_lock(game->mutex);
-							game->room = room;
-							pthread_mutex_unlock(game->mutex);
-
-							// Thêm thông tin người chơi vào phòng
-							user->status = IN_ROOM;
-							player = initPlayer(user->username, user->socket);
-							pthread_mutex_lock(game->mutex);
-							addPlayerToRoom(room, player);
-							pthread_mutex_unlock(game->mutex);
-							printRoom(room);
-
-							// Gửi thông tin về client
-							bzero(message, MESS_BUFFER);
-							modify_message(JOINR, mess->body, message);
-							write(clientSockfd, message, strlen(message));
-
-							// Gửi thông tin về người chơi cùng phòng
-							bzero(message, MESS_BUFFER);
-							modify_message(OPONENT_JOIN, "Người chơi tham gia phòng!\n Nhập 'start' để bắt đầu!", message);
-							for (int i = 0; i < room->no_player; i++)
+						
+							if (room->no_player == 2)
 							{
-								if (room->players[i] != NULL)
+								bzero(message, MESS_BUFFER);
+								modify_message(ROOM_FULL, "Phòng đã đầy!", message);
+								//30|12|Phòng đã đầy!
+								write(clientSockfd, message, strlen(message));
+							}
+							else
+							{
+
+								// Mỗi game sẽ thuộc một phòng
+								pthread_mutex_lock(game->mutex);
+								game->room = room;
+								pthread_mutex_unlock(game->mutex);
+
+								// Thêm thông tin người chơi vào phòng
+
+								user->status = IN_ROOM;
+								player = initPlayer(user->username, user->socket);
+								pthread_mutex_lock(game->mutex);
+								addPlayerToRoom(room, player);
+								pthread_mutex_unlock(game->mutex);
+								printRoom(room);
+
+								// Gửi thông tin về client
+								bzero(message, MESS_BUFFER);
+								modify_message(JOINR, mess->body, message);
+								write(clientSockfd, message, strlen(message));
+
+								// Gửi thông tin về người chơi cùng phòng
+								bzero(message, MESS_BUFFER);
+								modify_message(OPONENT_JOIN, "Người chơi tham gia phòng!\n Nhập 'start' để bắt đầu!", message);
+								for (int i = 0; i < room->no_player; i++)
 								{
-									int socket = room->players[i]->socket;
-									if (socket != 0)
+									if (room->players[i] != NULL)
 									{
-										if (socket != clientSockfd && write(socket, message, MESS_BUFFER - 1) == -1)
-											perror("Socket write failed: ");
+										int socket = room->players[i]->socket;
+										if (socket != 0)
+										{
+											if (socket != clientSockfd && write(socket, message, MESS_BUFFER - 1) == -1)
+												perror("Socket write failed: ");
+										}
 									}
 								}
 							}
@@ -578,9 +599,11 @@ void *clientHandler(void *data)
 
 						// Chuyển sang trạng thái đang chơi
 						game->isPlay = 1;
+						
 						pthread_cond_signal(game->cond_players);
 						pthread_mutex_unlock(game->mutex);
-						game->room=room;
+
+						
 					}
 				}
 
@@ -628,13 +651,13 @@ void *clientHandler(void *data)
 					bzero(message, MESS_BUFFER);
 					bzero(result, 256);
 					modify_message(CORRECT, "Chính xác!", message);
-					player = getPlayerBySocket(room->players, clientSockfd);
+
 					pthread_mutex_lock(game->mutex);
-					updatePoint(player);
+					updatePoint(player,question->point);
 					pthread_mutex_unlock(game->mutex);
 					printPlayer(player);
 					write(clientSockfd, message, strlen(message));
-
+         
 					pthread_mutex_lock(game->mutex);
 					num_question++;
 					game->isAnswered = 1;
@@ -722,7 +745,6 @@ void *clientHandler(void *data)
 				user = searchUserBySocket(users, clientSockfd);
 
 				room = game->room;
-				printRoom(room);
 				if (room == NULL)
 				{
 					bzero(message, MESS_BUFFER);

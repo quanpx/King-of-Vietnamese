@@ -31,5 +31,5 @@ int getTotalPoint(Player *player);
 void printPlayer(Player *player);
 Player *searchPlayer(Player *players[MAX_PLAYER],char *username);
 void addPlayer(Player *players[MAX_PLAYER],Player *player);
-void updatePoint(Player *player);
+void updatePoint(Player *player,int point);
 Player *getPlayerBySocket(Player *player[MAX_PLAYER],int socket);

@@ -1,6 +1,7 @@
 #include "question.h"
 #include<pthread.h>
 #include "../utils/utils.h"
+#include "../utils/command.h"
 
 Question *initQuest(char *quest, char *answer, int point)
 {
@@ -145,4 +146,20 @@ void getQuestions(Question *questions[MAX_QUESTION],char *file)
 		questions[i]=NULL;
 	}
 	readQuestsFromFile(questions,file);
+}
+void sendQuestion(Question *question,int sockfd)
+{
+	char quest[40];
+	char point[2];
+	char message[256];
+	bzero(quest,40);
+	strcat(quest,question->quest);
+	convert_number_to_string(question->point,point);
+	strcat(quest," ");
+	strcat(quest,point);
+	strcat(quest," điểm");
+
+	modify_message(QUEST,quest,message);
+	write(sockfd,message,strlen(message));
+
 }

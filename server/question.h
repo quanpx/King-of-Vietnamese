@@ -30,7 +30,7 @@ void readQuestsFromFile(Question *quests[MAX_QUESTION],char *filename);
 void writeQuestsToFile(Question *quests[MAX_QUESTION],char *filename);
 void printQuests(Question *quests[MAX_QUESTION]);
 int checkAnswer(Question *quest, char *answer);
-void sendQuestion(Question *quest);
+void sendQuestion(Question *quest,int sockfd);
 void receiveAnswer(Player *player, Question *quest);
 void getQuestions(Question *questions[MAX_QUESTION],char *file);
 void printQuestion(Question *question);

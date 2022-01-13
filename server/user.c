@@ -132,8 +132,10 @@ void handleSignUp(User *users[MAX_USER], char *info)
 	char password[20];
 	bzero(username, 20);
 	bzero(password, 20);
+
 	split_command(info, username, password);
 	printf("%s %s\n", username, password);
+	
 	User *user = initUser(username, password, 0);
 	addUser(users, user);
 	writeUsersToFile(users);

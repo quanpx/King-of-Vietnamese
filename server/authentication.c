@@ -18,6 +18,7 @@ int authenticate(User *users[MAX_USER],char *username, char *password)
 }
 User* handleLogin(User *users[MAX_USER],char *body, int socket,char *result)
 {
+	// quan-123
 	char username[20];
 	char password[20];
 	bzero(result,256);

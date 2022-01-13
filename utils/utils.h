@@ -8,7 +8,7 @@ typedef struct message
 {
     int cmdType;
     int length;
-    char body[256];
+    char body[256]; 
 }Message;
 
 #endif //STRUCT_MESSAGE 

@@ -132,7 +132,7 @@ void startClient(int server_socket)
                                 resetScreenAndShowAuthMenu();
                                 break;
                             case LOGIN_FAIL:
-                                printf("%s\n",messg->body);
+                                printf("%s\n", messg->body);
                                 resetScreenAndShowAuthMenu();
                                 break;
                             case LOGOT_SUCC:
@@ -171,6 +171,10 @@ void startClient(int server_socket)
                                 system("clear");
                                 showMenuInRoom(roomId);
 
+                                break;
+                            case ROOM_FULL:
+                                printf("%s\n", messg->body);
+                                resetScreenAndShowHomeMenu();
                                 break;
                             case OPONENT_JOIN:
                                 printf("%s\n", messg->body);
@@ -229,6 +233,7 @@ void startClient(int server_socket)
                             case READY:
                                 printf("%s\n", messg->body);
                                 break;
+                                
                             case MESSG_NOT_FOUND:
                                 printf("%s\n", messg->body);
                                 resetScreenAndShowHomeMenu();

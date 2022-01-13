@@ -32,7 +32,8 @@ typedef enum commnand
     NOT_IN_ROOM, //Không ở trong phòng,
     EXIT, // Thoát
     EXIT_SUCC, // Thông điệp thoát thành công
-    EXIT_NOT_LOGIN // Người dùng thoát khi chưa login 
+    EXIT_NOT_LOGIN, // Người dùng thoát khi chưa login 
+    ROOM_FULL // Phòng đầy
 
 }Command;
 
