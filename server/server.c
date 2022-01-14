@@ -490,9 +490,9 @@ void *clientHandler(void *data)
 
 								user->status = IN_ROOM;
 								player = initPlayer(user->username, user->socket);
-								pthread_mutex_lock(game->mutex);
+								// pthread_mutex_lock(game->mutex);
 								addPlayerToRoom(room, player);
-								pthread_mutex_unlock(game->mutex);
+								// pthread_mutex_unlock(game->mutex);
 								printRoom(room);
 
 								// Gửi thông tin về client
@@ -766,11 +766,11 @@ void *clientHandler(void *data)
 							{
 								if (room->players[i]->socket == clientSockfd)
 								{
-									pthread_mutex_lock(game->mutex);
+									//pthread_mutex_lock(game->mutex);
 									room->players[i] = NULL;
 									room->no_player--;
 									room->flag = 0;
-									pthread_mutex_unlock(game->mutex);
+									//pthread_mutex_unlock(game->mutex);
 									break;
 								}
 							}
